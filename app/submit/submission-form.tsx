@@ -49,6 +49,7 @@ export default function SubmissionForm({ faculty }: { faculty: Faculty[] }) {
 
     const payload = {
       title: String(form.get('title') ?? '').trim(),
+      defenseType: String(form.get('defenseType') ?? '').trim(),
       program: String(form.get('program') ?? '').trim(),
       major: String(form.get('major') ?? '').trim() || null,
       researchFileUrl: String(form.get('researchFileUrl') ?? '').trim(),
@@ -107,6 +108,16 @@ export default function SubmissionForm({ faculty }: { faculty: Faculty[] }) {
           <div className="field full">
             <label htmlFor="title">Research title</label>
             <textarea id="title" name="title" maxLength={500} required />
+          </div>
+
+          <div className="field">
+            <label htmlFor="defenseType">Defense type</label>
+            <select id="defenseType" name="defenseType" defaultValue="" required>
+              <option value="">Select defense type</option>
+              <option value="title">Title Defense</option>
+              <option value="proposal">Proposal Defense</option>
+              <option value="final">Final Defense</option>
+            </select>
           </div>
 
           <div className="field">
