@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { logoutAdmin } from './admin/actions'
 import './globals.css'
+import './enhancements.css'
 
 export const metadata: Metadata = {
   title: 'Research Defense Scheduler',
