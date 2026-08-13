@@ -1,3 +1,5 @@
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
 import { loginAdmin } from './actions'
 
 export default async function AdminPage({
@@ -6,6 +8,20 @@ export default async function AdminPage({
   searchParams: Promise<{ error?: string }>
 }) {
   const { error } = await searchParams
+  const supabase = await createClient()
+  const { data: claimsData } = await supabase.auth.getClaims()
+  const userId = claimsData?.claims?.sub
+
+  if (userId) {
+    const { data: adminProfile } = await supabase
+      .from('admin_profiles')
+      .select('user_id')
+      .eq('user_id', userId)
+      .eq('is_active', true)
+      .maybeSingle()
+
+    if (adminProfile) redirect('/admin/dashboard')
+  }
 
   return (
     <section className="container">
