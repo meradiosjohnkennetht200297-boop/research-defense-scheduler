@@ -17,14 +17,11 @@ export default async function SubmitResearchPage() {
 
   return (
     <>
-      <section className="page-head">
+      <section className="page-head submission-page-head">
         <div className="container">
           <p className="eyebrow">Student Submission</p>
-          <h1>Submit your research group.</h1>
-          <p className="lead">
-            Complete the form below. Your contact details remain private and scheduling information
-            will be assigned by the administrator.
-          </p>
+          <h1>Submit your research.</h1>
+          <p className="lead">Enter the research and group details, review them, then submit for defense scheduling.</p>
         </div>
       </section>
 
