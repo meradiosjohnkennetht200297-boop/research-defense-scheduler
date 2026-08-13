@@ -1,4 +1,5 @@
 import SubmissionForm from './submission-form-v2'
+import SubmissionEnterGuard from './submission-enter-guard'
 import { createClient } from '@/lib/supabase/server'
 
 type Faculty = {
@@ -27,7 +28,9 @@ export default async function SubmitResearchPage() {
 
       <section>
         <div className="container">
-          <SubmissionForm faculty={(data ?? []) as Faculty[]} />
+          <SubmissionEnterGuard>
+            <SubmissionForm faculty={(data ?? []) as Faculty[]} />
+          </SubmissionEnterGuard>
         </div>
       </section>
     </>
