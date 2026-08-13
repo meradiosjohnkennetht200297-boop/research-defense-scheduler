@@ -7,6 +7,11 @@
   white-space: nowrap;
 }
 
+/* Signed-in users already have Research Groups inside Admin Mode. */
+.site-header .nav-links > a[href="/admin/groups"] {
+  display: none;
+}
+
 .field-help {
   margin: 2px 0 0;
   color: var(--muted);
@@ -17,6 +22,12 @@
 .research-file-button {
   width: 100%;
   margin: 6px 0 20px;
+}
+
+@media (max-width: 760px) {
+  .admin-nav-links .admin-public-link {
+    display: none;
+  }
 }
 
 @media (max-width: 620px) {
@@ -30,5 +41,24 @@
 
   .nav-links form .button {
     padding-inline: 11px;
+  }
+}
+
+@media (max-width: 520px) {
+  .admin-nav-links {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+    overflow: visible;
+  }
+
+  .admin-nav-link {
+    min-width: 0;
+    min-height: 42px;
+    justify-content: center;
+    padding-inline: 4px;
+    font-size: 0.68rem;
+    line-height: 1.15;
+    text-align: center;
   }
 }
