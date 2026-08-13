@@ -28,11 +28,13 @@ export default function SubmissionForm({ faculty }: { faculty: Faculty[] }) {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    const formElement = event.currentTarget
+
     setSubmitting(true)
     setError(null)
     setSuccessCode(null)
 
-    const form = new FormData(event.currentTarget)
+    const form = new FormData(formElement)
     const cleanMembers = members.map((member) => member.trim()).filter(Boolean)
 
     if (cleanMembers.length === 0) {
@@ -65,7 +67,7 @@ export default function SubmissionForm({ faculty }: { faculty: Faculty[] }) {
       }
 
       setSuccessCode(result.publicCode)
-      event.currentTarget.reset()
+      formElement.reset()
       setMembers(['', '', ''])
     } catch (submissionError) {
       setError(
