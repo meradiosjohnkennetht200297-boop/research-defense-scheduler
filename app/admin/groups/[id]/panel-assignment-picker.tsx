@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 type Faculty = { id: string; full_name: string }
 
@@ -31,6 +31,11 @@ function SearchField({
   const [query, setQuery] = useState(selectedName)
   const [duplicate, setDuplicate] = useState(false)
   const listId = `${id}-list`
+
+  useEffect(() => {
+    setQuery(selectedName)
+    setDuplicate(false)
+  }, [selectedName])
 
   function update(next: string) {
     setQuery(next)
@@ -74,10 +79,23 @@ function SearchField({
 }
 
 export default function PanelAssignmentPicker({ faculty, initialChairId, initialMemberIds }: PickerProps) {
+  const rootRef = useRef<HTMLDivElement>(null)
+  const initialMembers = initialMemberIds.length ? initialMemberIds : ['']
   const [chairId, setChairId] = useState(initialChairId)
-  const [memberIds, setMemberIds] = useState(initialMemberIds.length ? initialMemberIds : [''])
+  const [memberIds, setMemberIds] = useState(initialMembers)
 
   const selected = useMemo(() => [chairId, ...memberIds].filter(Boolean), [chairId, memberIds])
+
+  useEffect(() => {
+    const form = rootRef.current?.closest('form')
+    if (!form) return
+    const reset = () => {
+      setChairId(initialChairId)
+      setMemberIds(initialMembers)
+    }
+    form.addEventListener('reset', reset)
+    return () => form.removeEventListener('reset', reset)
+  }, [initialChairId, initialMemberIds])
 
   function addMember() {
     if (memberIds.length < 4) setMemberIds((current) => [...current, ''])
@@ -95,7 +113,7 @@ export default function PanelAssignmentPicker({ faculty, initialChairId, initial
   }
 
   return (
-    <div className="workspace-panel-picker">
+    <div className="workspace-panel-picker" ref={rootRef}>
       <input name="chairId" type="hidden" value={chairId} />
       {memberIds.filter(Boolean).map((id, index) => <input key={`${id}-${index}`} name="memberIds" type="hidden" value={id} />)}
 
