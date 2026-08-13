@@ -7,8 +7,10 @@ import { logoutAdmin } from './actions'
 
 const navItems = [
   { label: 'Dashboard', href: '/admin/dashboard' },
-  { label: 'Research Groups', href: '/admin/dashboard#research-groups', hash: '#research-groups' },
+  { label: 'Research Groups', href: '/admin/groups' },
   { label: 'Schedule', href: '/admin/dashboard#upcoming-defenses', hash: '#upcoming-defenses' },
+  { label: 'Action Required', href: '/admin/dashboard#action-required', hash: '#action-required', attention: true },
+  { label: 'History', href: '/admin/history' },
   { label: 'Faculty', href: '/admin/faculty' },
 ]
 
@@ -34,26 +36,21 @@ export default function AdminNavigation({ displayName }: { displayName: string }
       <div className="container admin-nav-wrap">
         <div className="admin-mode-block" aria-label={`Admin mode, signed in as ${displayName}`}>
           <span className="admin-mode-dot" aria-hidden="true" />
-          <span>
-            <strong>Admin Mode</strong>
-            <small>{displayName}</small>
-          </span>
+          <span><strong>Admin Mode</strong><small>{displayName}</small></span>
         </div>
 
         <nav className="admin-nav-links" aria-label="Administrator navigation">
           {navItems.map((item) => (
             <Link
               aria-current={isActive(item) ? 'page' : undefined}
-              className={isActive(item) ? 'admin-nav-link active' : 'admin-nav-link'}
+              className={`${isActive(item) ? 'admin-nav-link active' : 'admin-nav-link'}${item.attention ? ' admin-attention-link' : ''}`}
               href={item.href}
               key={item.href}
             >
               {item.label}
             </Link>
           ))}
-          <Link className="admin-nav-link admin-public-link" href="/">
-            Public Site ↗
-          </Link>
+          <Link className="admin-nav-link admin-public-link" href="/">Public Site ↗</Link>
         </nav>
 
         <form action={logoutAdmin} className="admin-signout-form">
