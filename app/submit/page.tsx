@@ -1,4 +1,4 @@
-import SubmissionForm from './submission-form'
+import SubmissionForm from './submission-form-v2'
 import { createClient } from '@/lib/supabase/server'
 
 type Faculty = {
