@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { logoutAdmin } from './admin/actions'
 import './globals.css'
 import './enhancements.css'
 import './defense-features.css'
@@ -43,20 +42,16 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             </Link>
 
             <nav className="nav-links" aria-label="Main navigation">
-              <Link href="/">Schedule</Link>
               {isAdmin ? (
                 <>
+                  <Link href="/#schedule">Public Schedule</Link>
                   <Link className="button button-small" href="/admin/dashboard">
-                    Dashboard
+                    Admin Workspace
                   </Link>
-                  <form action={logoutAdmin}>
-                    <button className="button button-secondary button-small" type="submit">
-                      Sign out
-                    </button>
-                  </form>
                 </>
               ) : (
                 <>
+                  <Link href="/">Schedule</Link>
                   <Link className="button button-small" href="/submit">Submit Research</Link>
                   <Link href="/admin">Admin</Link>
                 </>
