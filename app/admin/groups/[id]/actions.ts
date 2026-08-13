@@ -4,6 +4,25 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 
+type ScheduleConflict = {
+  kind: 'venue' | 'faculty'
+  public_code: string
+  title: string
+  defense_date: string
+  start_time: string
+  end_time: string
+  venue: string
+  faculty_name?: string
+  new_roles?: string[]
+  existing_roles?: string[]
+}
+
+type SaveResult = {
+  ok?: boolean
+  error?: string
+  conflicts?: ScheduleConflict[]
+}
+
 function clean(value: FormDataEntryValue | null) {
   return String(value ?? '').trim()
 }
@@ -26,6 +45,11 @@ async function requireAdmin() {
   return supabase
 }
 
+function conflictRedirect(groupId: string, conflicts: ScheduleConflict[]) {
+  const value = encodeURIComponent(JSON.stringify(conflicts.slice(0, 12)))
+  redirect(`/admin/groups/${groupId}?conflicts=${value}`)
+}
+
 export async function saveDefenseSchedule(formData: FormData) {
   const groupId = clean(formData.get('groupId'))
   const defenseType = clean(formData.get('defenseType')).toLowerCase()
@@ -37,13 +61,16 @@ export async function saveDefenseSchedule(formData: FormData) {
   const chairId = clean(formData.get('chairId'))
   const status = clean(formData.get('status'))
   const isPublished = formData.get('isPublished') === 'on'
-  const memberIds = formData
-    .getAll('memberIds')
-    .map((value) => String(value).trim())
-    .filter(Boolean)
+  const memberIds = [...new Set(
+    formData
+      .getAll('memberIds')
+      .map((value) => String(value).trim())
+      .filter(Boolean)
+  )]
+    .filter((id) => id !== chairId)
     .slice(0, 4)
 
-  if (!groupId || !defenseDate || !startTime || !endTime || !venue || !chairId) {
+  if (!groupId || !defenseType || !defenseDate || !startTime || !endTime || !venue || !chairId) {
     redirect(`/admin/groups/${groupId}?error=${encodeURIComponent('Defense type, date, start time, end time, venue, and panel chair are required.')}`)
   }
 
@@ -58,89 +85,35 @@ export async function saveDefenseSchedule(formData: FormData) {
 
   const allowedStatuses = new Set(['pending', 'scheduled', 'completed', 'cancelled'])
   const nextStatus = allowedStatuses.has(status) ? status : 'scheduled'
-  const uniqueMembers = [...new Set(memberIds)].filter((id) => id !== chairId)
-
   const supabase = await requireAdmin()
 
-  const { data: group } = await supabase
-    .from('research_groups')
-    .select('id')
-    .eq('id', groupId)
-    .maybeSingle()
+  const { data, error } = await supabase.rpc('save_defense_schedule_checked', {
+    p_group_id: groupId,
+    p_defense_type: defenseType,
+    p_defense_date: defenseDate,
+    p_start_time: startTime,
+    p_end_time: endTime,
+    p_venue: venue,
+    p_notes: notes || null,
+    p_chair_id: chairId,
+    p_member_ids: memberIds,
+    p_status: nextStatus,
+    p_is_published: isPublished,
+  })
 
-  if (!group) redirect('/admin/dashboard')
-
-  const panelIds = [chairId, ...uniqueMembers]
-  const { data: activeFaculty, error: facultyError } = await supabase
-    .from('faculty')
-    .select('id')
-    .in('id', panelIds)
-    .eq('is_active', true)
-
-  if (facultyError || (activeFaculty?.length ?? 0) !== panelIds.length) {
-    redirect(`/admin/groups/${groupId}?error=${encodeURIComponent('One or more selected panelists are unavailable. Please review the panel list.')}`)
-  }
-
-  const publishSchedule = isPublished && nextStatus === 'scheduled'
-
-  const { data: schedule, error: scheduleError } = await supabase
-    .from('defense_schedules')
-    .upsert(
-      {
-        research_group_id: groupId,
-        defense_date: defenseDate,
-        start_time: startTime,
-        end_time: endTime,
-        venue,
-        notes: notes || null,
-        is_published: publishSchedule,
-      },
-      { onConflict: 'research_group_id' }
-    )
-    .select('id')
-    .single()
-
-  if (scheduleError || !schedule) {
+  if (error) {
+    console.error('Conflict-checked schedule save failed:', error.message)
     redirect(`/admin/groups/${groupId}?error=${encodeURIComponent('Unable to save the defense schedule. Please try again.')}`)
   }
 
-  const { error: deleteError } = await supabase
-    .from('panel_assignments')
-    .delete()
-    .eq('defense_schedule_id', schedule.id)
+  const result = (data ?? {}) as SaveResult
 
-  if (deleteError) {
-    redirect(`/admin/groups/${groupId}?error=${encodeURIComponent('Schedule saved, but the panel list could not be updated.')}`)
-  }
+  if (!result.ok) {
+    if (Array.isArray(result.conflicts) && result.conflicts.length > 0) {
+      conflictRedirect(groupId, result.conflicts)
+    }
 
-  const assignments = [
-    {
-      defense_schedule_id: schedule.id,
-      faculty_id: chairId,
-      panel_role: 'chair',
-      sort_order: 0,
-    },
-    ...uniqueMembers.map((facultyId, index) => ({
-      defense_schedule_id: schedule.id,
-      faculty_id: facultyId,
-      panel_role: 'member',
-      sort_order: index + 1,
-    })),
-  ]
-
-  const { error: panelError } = await supabase.from('panel_assignments').insert(assignments)
-
-  if (panelError) {
-    redirect(`/admin/groups/${groupId}?error=${encodeURIComponent('Schedule saved, but the panel list could not be completed.')}`)
-  }
-
-  const { error: groupError } = await supabase
-    .from('research_groups')
-    .update({ status: nextStatus, defense_type: defenseType })
-    .eq('id', groupId)
-
-  if (groupError) {
-    redirect(`/admin/groups/${groupId}?error=${encodeURIComponent('Schedule saved, but the research details could not be updated.')}`)
+    redirect(`/admin/groups/${groupId}?error=${encodeURIComponent(result.error || 'Unable to save the defense schedule. Please review the details and try again.')}`)
   }
 
   revalidatePath('/')
