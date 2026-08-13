@@ -3,6 +3,9 @@ import { createAdminClient } from '@/lib/supabase/admin'
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 const GOOGLE_FILE_HOSTS = new Set(['drive.google.com', 'docs.google.com'])
+const PROGRAMS = new Set(['BEED', 'BSED', 'BSA', 'BSAIS', 'BSBA'])
+const BSED_MAJORS = new Set(['English', 'Filipino', 'Mathematics', 'Science'])
+const BSBA_MAJORS = new Set(['MM', 'FM', 'HRM'])
 
 function cleanOptionalText(value: unknown, maxLength: number) {
   if (typeof value !== 'string') return null
@@ -35,6 +38,8 @@ export async function POST(request: Request) {
     const body = await request.json()
 
     const title = cleanOptionalText(body.title, 500)
+    const program = typeof body.program === 'string' ? body.program.trim().toUpperCase() : ''
+    const major = cleanOptionalText(body.major, 40)
     const researchFileUrl = cleanGoogleFileUrl(body.researchFileUrl)
     const contactPerson = cleanOptionalText(body.contactPerson, 150)
     const contactEmail = cleanOptionalText(body.contactEmail, 254)
@@ -57,6 +62,20 @@ export async function POST(request: Request) {
       )
     }
 
+    if (!PROGRAMS.has(program)) {
+      return NextResponse.json({ error: 'Please select a valid program.' }, { status: 400 })
+    }
+
+    if (program === 'BSED' && (!major || !BSED_MAJORS.has(major))) {
+      return NextResponse.json({ error: 'Please select a valid BSED major.' }, { status: 400 })
+    }
+
+    if (program === 'BSBA' && (!major || !BSBA_MAJORS.has(major))) {
+      return NextResponse.json({ error: 'Please select a valid BSBA major.' }, { status: 400 })
+    }
+
+    const normalizedMajor = program === 'BSED' || program === 'BSBA' ? major : null
+
     if (!researchFileUrl) {
       return NextResponse.json(
         { error: 'Please provide a valid Google Drive or Google Docs research file link.' },
@@ -73,6 +92,8 @@ export async function POST(request: Request) {
       p_instructor_id: instructorId,
       p_adviser_id: adviserId,
       p_research_file_url: researchFileUrl,
+      p_program: program,
+      p_major: normalizedMajor,
       p_members: members,
     })
 
