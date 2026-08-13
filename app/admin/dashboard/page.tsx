@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { logoutAdmin } from '../actions'
@@ -27,10 +28,11 @@ export default async function AdminDashboard() {
 
   if (!adminProfile) redirect('/admin')
 
-  const [allCount, pendingCount, scheduledCount, recentGroups] = await Promise.all([
+  const [allCount, pendingCount, scheduledCount, facultyCount, recentGroups] = await Promise.all([
     supabase.from('research_groups').select('*', { count: 'exact', head: true }),
     supabase.from('research_groups').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
     supabase.from('research_groups').select('*', { count: 'exact', head: true }).eq('status', 'scheduled'),
+    supabase.from('faculty').select('*', { count: 'exact', head: true }).eq('is_active', true),
     supabase
       .from('research_groups')
       .select('id, public_code, title, contact_person, status, submitted_at')
@@ -43,15 +45,20 @@ export default async function AdminDashboard() {
   return (
     <section className="section">
       <div className="container">
-        <div className="section-heading">
+        <div className="section-heading admin-heading">
           <div>
             <p className="eyebrow">Admin Dashboard</p>
             <h2>Research defense management</h2>
             <p>Signed in as {adminProfile.display_name}</p>
           </div>
-          <form action={logoutAdmin}>
-            <button className="button button-secondary button-small" type="submit">Sign out</button>
-          </form>
+          <div className="admin-actions">
+            <Link className="button button-secondary button-small" href="/admin/faculty">
+              Manage Faculty
+            </Link>
+            <form action={logoutAdmin}>
+              <button className="button button-secondary button-small" type="submit">Sign out</button>
+            </form>
+          </div>
         </div>
 
         <div className="dashboard-grid">
@@ -67,6 +74,11 @@ export default async function AdminDashboard() {
             <span>Scheduled</span>
             <strong>{scheduledCount.count ?? 0}</strong>
           </div>
+          <Link className="card stat-card stat-link" href="/admin/faculty">
+            <span>Active faculty</span>
+            <strong>{facultyCount.count ?? 0}</strong>
+            <small>Manage directory →</small>
+          </Link>
         </div>
 
         <div className="card table-wrap">
