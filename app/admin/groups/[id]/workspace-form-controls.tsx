@@ -14,14 +14,21 @@ export default function WorkspaceFormControls() {
 
     const markDirty = () => setDirty(true)
     const clearDirty = () => setDirty(false)
+    const markPanelButtonChange = (event: Event) => {
+      const target = event.target as Element | null
+      if (target?.closest('.workspace-add-panel,.workspace-remove-panel')) setDirty(true)
+    }
+
     form.addEventListener('input', markDirty)
     form.addEventListener('change', markDirty)
+    form.addEventListener('click', markPanelButtonChange)
     form.addEventListener('reset', clearDirty)
     form.addEventListener('submit', clearDirty)
 
     return () => {
       form.removeEventListener('input', markDirty)
       form.removeEventListener('change', markDirty)
+      form.removeEventListener('click', markPanelButtonChange)
       form.removeEventListener('reset', clearDirty)
       form.removeEventListener('submit', clearDirty)
     }
