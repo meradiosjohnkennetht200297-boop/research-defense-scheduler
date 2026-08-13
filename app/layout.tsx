@@ -5,6 +5,7 @@ import './globals.css'
 import './enhancements.css'
 import './defense-features.css'
 import './public-schedule.css'
+import './submit/submission.css'
 
 export const metadata: Metadata = {
   title: 'Research Defense Scheduler',
