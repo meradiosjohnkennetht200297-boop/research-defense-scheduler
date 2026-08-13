@@ -6,6 +6,8 @@ import './enhancements.css'
 import './defense-features.css'
 import './public-schedule.css'
 import './submit/submission.css'
+import './admin/workspace-core.css'
+import './admin/workspace-controls.css'
 
 export const metadata: Metadata = {
   title: 'Research Defense Scheduler',
