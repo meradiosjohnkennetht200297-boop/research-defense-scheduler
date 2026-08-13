@@ -12,6 +12,29 @@ export default function WorkspaceFormControls() {
     const form = rootRef.current?.closest('form')
     if (!form) return
 
+    const statusSelect = form.querySelector<HTMLSelectElement>('select[name="status"]')
+    if (statusSelect) {
+      statusSelect.value = 'scheduled'
+      statusSelect.disabled = true
+      const statusField = statusSelect.closest<HTMLElement>('.field')
+      if (statusField) statusField.hidden = true
+
+      const section = statusSelect.closest<HTMLElement>('.workspace-form-section')
+      const heading = section?.querySelector<HTMLElement>('.workspace-section-heading h3')
+      const description = section?.querySelector<HTMLElement>('.workspace-section-heading p')
+      const publishHelp = section?.querySelector<HTMLElement>('.workspace-publish-copy small')
+
+      if (heading) heading.textContent = 'Public visibility'
+      if (description) description.textContent = 'Choose whether this scheduled defense appears on the public schedule.'
+      if (publishHelp) publishHelp.textContent = 'Turn this on when the defense is ready to appear publicly. It disappears automatically after the end time.'
+    }
+
+    const rescheduleAlert = Array.from(document.querySelectorAll<HTMLElement>('.alert-warning'))
+      .find((element) => element.textContent?.includes('keep the status as Scheduled'))
+    if (rescheduleAlert) {
+      rescheduleAlert.textContent = 'Enter the new date and time, then save the assignment. The defense will automatically remain Scheduled.'
+    }
+
     const markDirty = () => setDirty(true)
     const clearDirty = () => setDirty(false)
     const markPanelButtonChange = (event: Event) => {
