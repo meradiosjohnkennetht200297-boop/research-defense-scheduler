@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+const GOOGLE_FILE_HOSTS = new Set(['drive.google.com', 'docs.google.com'])
 
 function cleanOptionalText(value: unknown, maxLength: number) {
   if (typeof value !== 'string') return null
@@ -15,11 +16,26 @@ function cleanUuid(value: unknown) {
   return UUID_PATTERN.test(value) ? value : null
 }
 
+function cleanGoogleFileUrl(value: unknown) {
+  if (typeof value !== 'string') return null
+  const cleaned = value.trim().slice(0, 2048)
+  if (!cleaned) return null
+
+  try {
+    const url = new URL(cleaned)
+    if (url.protocol !== 'https:' || !GOOGLE_FILE_HOSTS.has(url.hostname)) return null
+    return url.toString()
+  } catch {
+    return null
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json()
 
     const title = cleanOptionalText(body.title, 500)
+    const researchFileUrl = cleanGoogleFileUrl(body.researchFileUrl)
     const contactPerson = cleanOptionalText(body.contactPerson, 150)
     const contactEmail = cleanOptionalText(body.contactEmail, 254)
     const contactNumber = cleanOptionalText(body.contactNumber, 40)
@@ -41,6 +57,13 @@ export async function POST(request: Request) {
       )
     }
 
+    if (!researchFileUrl) {
+      return NextResponse.json(
+        { error: 'Please provide a valid Google Drive or Google Docs research file link.' },
+        { status: 400 }
+      )
+    }
+
     const supabase = createAdminClient()
     const { data, error } = await supabase.rpc('submit_research_group', {
       p_title: title,
@@ -49,6 +72,7 @@ export async function POST(request: Request) {
       p_contact_number: contactNumber,
       p_instructor_id: instructorId,
       p_adviser_id: adviserId,
+      p_research_file_url: researchFileUrl,
       p_members: members,
     })
 
