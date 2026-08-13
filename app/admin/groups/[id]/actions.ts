@@ -41,6 +41,7 @@ export async function saveDefenseSchedule(formData: FormData) {
     .getAll('memberIds')
     .map((value) => String(value).trim())
     .filter(Boolean)
+    .slice(0, 4)
 
   if (!groupId || !defenseDate || !startTime || !endTime || !venue || !chairId) {
     redirect(`/admin/groups/${groupId}?error=${encodeURIComponent('Defense type, date, start time, end time, venue, and panel chair are required.')}`)
@@ -144,6 +145,7 @@ export async function saveDefenseSchedule(formData: FormData) {
 
   revalidatePath('/')
   revalidatePath('/admin/dashboard')
+  revalidatePath('/admin/groups')
   revalidatePath(`/admin/groups/${groupId}`)
   redirect(`/admin/groups/${groupId}?saved=1`)
 }
