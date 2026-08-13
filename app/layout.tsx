@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase/server'
+import { logoutAdmin } from './admin/actions'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -7,7 +9,24 @@ export const metadata: Metadata = {
   description: 'Submit research groups and view published research defense schedules.',
 }
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const supabase = await createClient()
+  const { data: claimsData } = await supabase.auth.getClaims()
+  const userId = claimsData?.claims?.sub
+
+  let isAdmin = false
+
+  if (userId) {
+    const { data: adminProfile } = await supabase
+      .from('admin_profiles')
+      .select('user_id')
+      .eq('user_id', userId)
+      .eq('is_active', true)
+      .maybeSingle()
+
+    isAdmin = Boolean(adminProfile)
+  }
+
   return (
     <html lang="en">
       <body>
@@ -20,10 +39,26 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                 <small>Scheduler</small>
               </span>
             </Link>
+
             <nav className="nav-links" aria-label="Main navigation">
               <Link href="/">Schedule</Link>
-              <Link className="button button-small" href="/submit">Submit Research</Link>
-              <Link href="/admin">Admin</Link>
+              {isAdmin ? (
+                <>
+                  <Link className="button button-small" href="/admin/dashboard">
+                    Dashboard
+                  </Link>
+                  <form action={logoutAdmin}>
+                    <button className="button button-secondary button-small" type="submit">
+                      Sign out
+                    </button>
+                  </form>
+                </>
+              ) : (
+                <>
+                  <Link className="button button-small" href="/submit">Submit Research</Link>
+                  <Link href="/admin">Admin</Link>
+                </>
+              )}
             </nav>
           </div>
         </header>
