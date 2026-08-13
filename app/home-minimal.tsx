@@ -125,8 +125,7 @@ export default async function MinimalHome() {
           ) : schedules.length === 0 ? (
             <div className="minimal-empty">
               <h3>No defenses scheduled today.</h3>
-              <p>You can browse the full published schedule for upcoming defense dates.</p>
-              <Link className="text-link" href="/schedule">Browse schedule →</Link>
+              <p>Use Browse Schedule above to check upcoming published defenses.</p>
             </div>
           ) : (
             <div className="minimal-today-list">
@@ -164,12 +163,6 @@ export default async function MinimalHome() {
               })}
             </div>
           )}
-
-          {schedules.length ? (
-            <div className="minimal-section-footer">
-              <Link className="text-link" href="/schedule">Browse full schedule →</Link>
-            </div>
-          ) : null}
         </div>
       </section>
     </>
