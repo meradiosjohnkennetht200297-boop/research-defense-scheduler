@@ -48,7 +48,7 @@ export default async function ResearchGroupWorkspace({
   const [groupResult, membersResult, scheduleResult, facultyResult] = await Promise.all([
     supabase
       .from('research_groups')
-      .select('id, public_code, title, research_file_url, contact_person, contact_email, contact_number, instructor_id, adviser_id, status, submitted_at')
+      .select('id, public_code, title, program, major, research_file_url, contact_person, contact_email, contact_number, instructor_id, adviser_id, status, submitted_at')
       .eq('id', id)
       .maybeSingle(),
     supabase
@@ -93,6 +93,7 @@ export default async function ResearchGroupWorkspace({
 
   const instructorName = group.instructor_id ? facultyNames.get(group.instructor_id) ?? 'Not found' : 'Not assigned'
   const adviserName = group.adviser_id ? facultyNames.get(group.adviser_id) ?? 'Not found' : 'Not assigned'
+  const programLabel = group.program ? `${group.program}${group.major ? ` - ${group.major}` : ''}` : 'Not recorded'
   const dateValue = schedule?.defense_date ?? ''
   const startValue = schedule?.start_time ? String(schedule.start_time).slice(0, 5) : ''
   const endValue = schedule?.end_time ? String(schedule.end_time).slice(0, 5) : ''
@@ -133,6 +134,10 @@ export default async function ResearchGroupWorkspace({
                 <div>
                   <dt>Status</dt>
                   <dd><span className={`status-pill status-${group.status}`}>{group.status}</span></dd>
+                </div>
+                <div>
+                  <dt>Program</dt>
+                  <dd>{programLabel}</dd>
                 </div>
                 <div>
                   <dt>Research instructor</dt>
