@@ -5,7 +5,9 @@ import './globals.css'
 import './enhancements.css'
 import './defense-features.css'
 import './public-schedule.css'
+import './minimal-public-core.css'
 import './submit/submission.css'
+import './submit/submission-minimal.css'
 import './admin/workspace-core.css'
 import './admin/workspace-controls.css'
 import './admin/ended-workflow.css'
@@ -49,17 +51,14 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             <nav className="nav-links" aria-label="Main navigation">
               {isAdmin ? (
                 <>
-                  <Link href="/#schedule">Public Schedule</Link>
+                  <Link href="/schedule">Public Schedule</Link>
                   <Link href="/admin/groups">Research Groups</Link>
-                  <Link className="button button-small" href="/admin/dashboard">
-                    Admin Workspace
-                  </Link>
+                  <Link className="button button-small" href="/admin/dashboard">Admin Workspace</Link>
                 </>
               ) : (
                 <>
-                  <Link href="/">Schedule</Link>
+                  <Link href="/schedule">Browse Schedule</Link>
                   <Link className="button button-small" href="/submit">Submit Research</Link>
-                  <Link href="/admin">Admin</Link>
                 </>
               )}
             </nav>
@@ -71,7 +70,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <footer className="site-footer">
           <div className="container footer-wrap">
             <span>Research Defense Scheduler</span>
-            <span>Mobile and desktop ready</span>
+            {isAdmin ? <Link href="/admin/dashboard">Admin Workspace</Link> : <Link href="/admin">Admin Login</Link>}
           </div>
         </footer>
       </body>
