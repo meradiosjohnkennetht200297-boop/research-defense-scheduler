@@ -61,7 +61,7 @@ export default async function AdminDashboard() {
           </div>
         </div>
 
-        <div className="dashboard-grid">
+        <div className="dashboard-grid dashboard-grid-four">
           <div className="card stat-card">
             <span>Total submissions</span>
             <strong>{allCount.count ?? 0}</strong>
@@ -90,21 +90,31 @@ export default async function AdminDashboard() {
                 <th>Contact</th>
                 <th>Status</th>
                 <th>Submitted</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
               {groups.length === 0 ? (
                 <tr>
-                  <td colSpan={5}>No research submissions yet.</td>
+                  <td colSpan={6}>No research submissions yet.</td>
                 </tr>
               ) : (
                 groups.map((group) => (
                   <tr key={group.id}>
                     <td><span className="code">{group.public_code}</span></td>
-                    <td>{group.title}</td>
+                    <td>
+                      <Link className="table-link" href={`/admin/groups/${group.id}`}>
+                        {group.title}
+                      </Link>
+                    </td>
                     <td>{group.contact_person}</td>
-                    <td>{group.status}</td>
+                    <td><span className={`status-pill status-${group.status}`}>{group.status}</span></td>
                     <td>{new Intl.DateTimeFormat('en-PH', { dateStyle: 'medium' }).format(new Date(group.submitted_at))}</td>
+                    <td>
+                      <Link className="button button-secondary button-small" href={`/admin/groups/${group.id}`}>
+                        Open
+                      </Link>
+                    </td>
                   </tr>
                 ))
               )}
