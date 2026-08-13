@@ -7,6 +7,8 @@ type ResearchGroupRow = {
   id: string
   public_code: string
   title: string
+  program: string | null
+  major: string | null
   contact_person: string
   status: 'pending' | 'scheduled' | 'completed' | 'cancelled'
   submitted_at: string
@@ -35,7 +37,7 @@ export default async function AdminDashboard() {
     supabase.from('faculty').select('*', { count: 'exact', head: true }).eq('is_active', true),
     supabase
       .from('research_groups')
-      .select('id, public_code, title, contact_person, status, submitted_at')
+      .select('id, public_code, title, program, major, contact_person, status, submitted_at')
       .order('submitted_at', { ascending: false })
       .limit(20),
   ])
@@ -87,6 +89,7 @@ export default async function AdminDashboard() {
               <tr>
                 <th>Code</th>
                 <th>Research title</th>
+                <th>Program</th>
                 <th>Contact</th>
                 <th>Status</th>
                 <th>Submitted</th>
@@ -96,7 +99,7 @@ export default async function AdminDashboard() {
             <tbody>
               {groups.length === 0 ? (
                 <tr>
-                  <td colSpan={6}>No research submissions yet.</td>
+                  <td colSpan={7}>No research submissions yet.</td>
                 </tr>
               ) : (
                 groups.map((group) => (
@@ -107,6 +110,7 @@ export default async function AdminDashboard() {
                         {group.title}
                       </Link>
                     </td>
+                    <td>{group.program ? `${group.program}${group.major ? ` - ${group.major}` : ''}` : 'Not recorded'}</td>
                     <td>{group.contact_person}</td>
                     <td><span className={`status-pill status-${group.status}`}>{group.status}</span></td>
                     <td>{new Intl.DateTimeFormat('en-PH', { dateStyle: 'medium' }).format(new Date(group.submitted_at))}</td>
