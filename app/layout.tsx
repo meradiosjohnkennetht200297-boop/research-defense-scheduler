@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { logoutAdmin } from './admin/actions'
 import './globals.css'
 import './enhancements.css'
+import './defense-features.css'
 
 export const metadata: Metadata = {
   title: 'Research Defense Scheduler',
