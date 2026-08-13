@@ -98,8 +98,8 @@ export default async function MinimalHome() {
       <section className="minimal-home-hero">
         <div className="container minimal-home-inner">
           <p className="eyebrow">Research Defense Scheduler</p>
-          <h1>Research defense scheduling, kept simple.</h1>
-          <p className="minimal-home-lead">Submit your research group or check the published defense schedule.</p>
+          <h1>Submit your research or check your defense schedule.</h1>
+          <p className="minimal-home-lead">Submit your research details for scheduling, or browse published defense dates, times, venues, and panels.</p>
           <div className="minimal-home-actions">
             <Link className="button" href="/submit">Submit Research</Link>
             <Link className="button button-secondary" href="/schedule">Browse Schedule</Link>
