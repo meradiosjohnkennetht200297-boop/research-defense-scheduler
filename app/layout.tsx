@@ -45,6 +45,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
               {isAdmin ? (
                 <>
                   <Link href="/#schedule">Public Schedule</Link>
+                  <Link href="/admin/groups">Research Groups</Link>
                   <Link className="button button-small" href="/admin/dashboard">
                     Admin Workspace
                   </Link>
