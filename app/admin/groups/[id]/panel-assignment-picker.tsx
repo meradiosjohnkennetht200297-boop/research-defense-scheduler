@@ -5,7 +5,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 type Faculty = { id: string; full_name: string }
 
 type PickerProps = {
-  faculty: Faculty[]
+  chairFaculty: Faculty[]
+  memberFaculty: Faculty[]
   initialChairId: string
   initialMemberIds: string[]
 }
@@ -54,10 +55,11 @@ function SearchField({
       <label htmlFor={id}>{label}{required ? <span className="required-mark"> *</span> : null}</label>
       <input
         autoComplete="off"
+        disabled={faculty.length === 0}
         id={id}
         list={listId}
         onChange={(event) => update(event.target.value)}
-        placeholder="Type a faculty name"
+        placeholder={faculty.length ? 'Type a faculty name' : 'No eligible faculty available'}
         value={query}
       />
       <datalist id={listId}>
@@ -72,26 +74,31 @@ function SearchField({
       ) : query.trim() ? (
         <p className="workspace-picker-feedback invalid">Choose the exact name from the suggestions.</p>
       ) : (
-        <p className="workspace-picker-help">Start typing to search the faculty directory.</p>
+        <p className="workspace-picker-help">Start typing to search eligible faculty.</p>
       )}
     </div>
   )
 }
 
-export default function PanelAssignmentPicker({ faculty, initialChairId, initialMemberIds }: PickerProps) {
+export default function PanelAssignmentPicker({ chairFaculty, memberFaculty, initialChairId, initialMemberIds }: PickerProps) {
   const rootRef = useRef<HTMLDivElement>(null)
   const initialMembers = initialMemberIds.length ? initialMemberIds : ['']
   const [chairId, setChairId] = useState(initialChairId)
   const [memberIds, setMemberIds] = useState(initialMembers)
-
   const selected = useMemo(() => [chairId, ...memberIds].filter(Boolean), [chairId, memberIds])
+  const allFaculty = useMemo(() => {
+    const map = new Map<string, Faculty>()
+    chairFaculty.forEach((person) => map.set(person.id, person))
+    memberFaculty.forEach((person) => map.set(person.id, person))
+    return [...map.values()]
+  }, [chairFaculty, memberFaculty])
 
   useEffect(() => {
     const form = rootRef.current?.closest('form')
     if (!form) return
     const reset = () => {
       setChairId(initialChairId)
-      setMemberIds(initialMembers)
+      setMemberIds(initialMemberIds.length ? initialMemberIds : [''])
     }
     form.addEventListener('reset', reset)
     return () => form.removeEventListener('reset', reset)
@@ -102,7 +109,7 @@ export default function PanelAssignmentPicker({ faculty, initialChairId, initial
   }
 
   function updateMember(index: number, id: string) {
-    setMemberIds((current) => current.map((value, i) => (i === index ? id : value)))
+    setMemberIds((current) => current.map((value, i) => i === index ? id : value))
   }
 
   function removeMember(index: number) {
@@ -119,7 +126,7 @@ export default function PanelAssignmentPicker({ faculty, initialChairId, initial
 
       <SearchField
         blockedIds={memberIds.filter(Boolean)}
-        faculty={faculty}
+        faculty={chairFaculty}
         id="chair-search"
         label="Panel chair"
         onChange={setChairId}
@@ -132,37 +139,24 @@ export default function PanelAssignmentPicker({ faculty, initialChairId, initial
           <div className="workspace-panel-picker-row" key={index}>
             <SearchField
               blockedIds={[chairId, ...memberIds.filter((_, i) => i !== index)].filter(Boolean)}
-              faculty={faculty}
+              faculty={memberFaculty}
               id={`member-search-${index}`}
               label={`Panel member ${index + 1}`}
               onChange={(value) => updateMember(index, value)}
               value={id}
             />
-            <button
-              aria-label={`Remove panel member ${index + 1}`}
-              className="button button-secondary button-small workspace-remove-panel"
-              onClick={() => removeMember(index)}
-              type="button"
-            >
-              Remove
-            </button>
+            <button aria-label={`Remove panel member ${index + 1}`} className="button button-secondary button-small workspace-remove-panel" onClick={() => removeMember(index)} type="button">Remove</button>
           </div>
         ))}
       </div>
 
-      <button className="button button-secondary button-small workspace-add-panel" disabled={memberIds.length >= 4} onClick={addMember} type="button">
-        + Add Panel Member
-      </button>
+      <button className="button button-secondary button-small workspace-add-panel" disabled={memberIds.length >= 4} onClick={addMember} type="button">+ Add Panel Member</button>
 
       <div className="workspace-selected-panel">
         <span className="workspace-selected-label">Selected panel</span>
         <div className="workspace-panel-chips">
-          {chairId ? (
-            <span className="workspace-panel-chip chair"><strong>Chair</strong>{faculty.find((person) => person.id === chairId)?.full_name}</span>
-          ) : null}
-          {memberIds.filter(Boolean).map((id, index) => (
-            <span className="workspace-panel-chip" key={id}><strong>Member {index + 1}</strong>{faculty.find((person) => person.id === id)?.full_name}</span>
-          ))}
+          {chairId ? <span className="workspace-panel-chip chair"><strong>Chair</strong>{allFaculty.find((person) => person.id === chairId)?.full_name}</span> : null}
+          {memberIds.filter(Boolean).map((id, index) => <span className="workspace-panel-chip" key={id}><strong>Member {index + 1}</strong>{allFaculty.find((person) => person.id === id)?.full_name}</span>)}
           {selected.length === 0 ? <span className="workspace-no-panel">No panel selected yet.</span> : null}
         </div>
       </div>
