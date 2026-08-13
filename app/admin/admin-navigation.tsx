@@ -8,9 +8,7 @@ import { logoutAdmin } from './actions'
 const navItems = [
   { label: 'Dashboard', href: '/admin/dashboard' },
   { label: 'Research Groups', href: '/admin/groups' },
-  { label: 'Schedule', href: '/admin/dashboard#upcoming-defenses', hash: '#upcoming-defenses' },
-  { label: 'Action Required', href: '/admin/dashboard#action-required', hash: '#action-required' },
-  { label: 'History', href: '/admin/history' },
+  { label: 'Defense Schedule', href: '/admin/schedule' },
   { label: 'Faculty', href: '/admin/faculty' },
 ]
 
@@ -26,8 +24,8 @@ export default function AdminNavigation({ displayName }: { displayName: string }
   }, [pathname])
 
   function isActive(item: (typeof navItems)[number]) {
-    if (item.hash) return pathname === '/admin/dashboard' && hash === item.hash
-    if (item.href === '/admin/dashboard') return pathname === '/admin/dashboard' && !hash
+    if (item.href === '/admin/schedule') return pathname.startsWith('/admin/schedule') || pathname.startsWith('/admin/history')
+    if (item.href === '/admin/dashboard') return pathname === '/admin/dashboard'
     return pathname.startsWith(item.href)
   }
 
