@@ -48,7 +48,7 @@ export default async function ResearchGroupWorkspace({
   const [groupResult, membersResult, scheduleResult, facultyResult] = await Promise.all([
     supabase
       .from('research_groups')
-      .select('id, public_code, title, contact_person, contact_email, contact_number, instructor_id, adviser_id, status, submitted_at')
+      .select('id, public_code, title, research_file_url, contact_person, contact_email, contact_number, instructor_id, adviser_id, status, submitted_at')
       .eq('id', id)
       .maybeSingle(),
     supabase
@@ -115,6 +115,19 @@ export default async function ResearchGroupWorkspace({
             <div className="card info-card">
               <p className="eyebrow">Research Group</p>
               <h2>{group.title}</h2>
+
+              {group.research_file_url ? (
+                <a
+                  className="button button-secondary button-small research-file-button"
+                  href={group.research_file_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Open Research File ↗
+                </a>
+              ) : (
+                <p className="muted-text">No research file link was submitted for this earlier record.</p>
+              )}
 
               <dl className="detail-list">
                 <div>
