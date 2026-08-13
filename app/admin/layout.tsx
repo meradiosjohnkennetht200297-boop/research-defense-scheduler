@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import AdminNavigation from './admin-navigation'
 import './admin.css'
 import './admin-refinement.css'
+import './groups-page.css'
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
