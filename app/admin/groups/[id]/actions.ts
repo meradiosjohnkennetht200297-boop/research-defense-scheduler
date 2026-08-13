@@ -28,6 +28,7 @@ async function requireAdmin() {
 
 export async function saveDefenseSchedule(formData: FormData) {
   const groupId = clean(formData.get('groupId'))
+  const defenseType = clean(formData.get('defenseType')).toLowerCase()
   const defenseDate = clean(formData.get('defenseDate'))
   const startTime = clean(formData.get('startTime'))
   const endTime = clean(formData.get('endTime'))
@@ -41,11 +42,16 @@ export async function saveDefenseSchedule(formData: FormData) {
     .map((value) => String(value).trim())
     .filter(Boolean)
 
-  if (!groupId || !defenseDate || !startTime || !venue || !chairId) {
-    redirect(`/admin/groups/${groupId}?error=${encodeURIComponent('Date, start time, venue, and panel chair are required.')}`)
+  if (!groupId || !defenseDate || !startTime || !endTime || !venue || !chairId) {
+    redirect(`/admin/groups/${groupId}?error=${encodeURIComponent('Defense type, date, start time, end time, venue, and panel chair are required.')}`)
   }
 
-  if (endTime && endTime <= startTime) {
+  const allowedDefenseTypes = new Set(['title', 'proposal', 'final'])
+  if (!allowedDefenseTypes.has(defenseType)) {
+    redirect(`/admin/groups/${groupId}?error=${encodeURIComponent('Please select a valid defense type.')}`)
+  }
+
+  if (endTime <= startTime) {
     redirect(`/admin/groups/${groupId}?error=${encodeURIComponent('End time must be later than start time.')}`)
   }
 
@@ -74,6 +80,8 @@ export async function saveDefenseSchedule(formData: FormData) {
     redirect(`/admin/groups/${groupId}?error=${encodeURIComponent('One or more selected panelists are unavailable. Please review the panel list.')}`)
   }
 
+  const publishSchedule = isPublished && nextStatus === 'scheduled'
+
   const { data: schedule, error: scheduleError } = await supabase
     .from('defense_schedules')
     .upsert(
@@ -81,10 +89,10 @@ export async function saveDefenseSchedule(formData: FormData) {
         research_group_id: groupId,
         defense_date: defenseDate,
         start_time: startTime,
-        end_time: endTime || null,
+        end_time: endTime,
         venue,
         notes: notes || null,
-        is_published: isPublished,
+        is_published: publishSchedule,
       },
       { onConflict: 'research_group_id' }
     )
@@ -127,15 +135,14 @@ export async function saveDefenseSchedule(formData: FormData) {
 
   const { error: groupError } = await supabase
     .from('research_groups')
-    .update({ status: nextStatus })
+    .update({ status: nextStatus, defense_type: defenseType })
     .eq('id', groupId)
 
   if (groupError) {
-    redirect(`/admin/groups/${groupId}?error=${encodeURIComponent('Schedule saved, but the research status could not be updated.')}`)
+    redirect(`/admin/groups/${groupId}?error=${encodeURIComponent('Schedule saved, but the research details could not be updated.')}`)
   }
 
   revalidatePath('/')
-  revalidatePath('/submit')
   revalidatePath('/admin/dashboard')
   revalidatePath(`/admin/groups/${groupId}`)
   redirect(`/admin/groups/${groupId}?saved=1`)
