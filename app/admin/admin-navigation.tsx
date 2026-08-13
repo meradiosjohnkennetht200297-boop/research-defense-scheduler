@@ -9,7 +9,7 @@ const navItems = [
   { label: 'Dashboard', href: '/admin/dashboard' },
   { label: 'Research Groups', href: '/admin/groups' },
   { label: 'Schedule', href: '/admin/dashboard#upcoming-defenses', hash: '#upcoming-defenses' },
-  { label: 'Action Required', href: '/admin/dashboard#action-required', hash: '#action-required', attention: true },
+  { label: 'Action Required', href: '/admin/dashboard#action-required', hash: '#action-required' },
   { label: 'History', href: '/admin/history' },
   { label: 'Faculty', href: '/admin/faculty' },
 ]
@@ -43,7 +43,7 @@ export default function AdminNavigation({ displayName }: { displayName: string }
           {navItems.map((item) => (
             <Link
               aria-current={isActive(item) ? 'page' : undefined}
-              className={`${isActive(item) ? 'admin-nav-link active' : 'admin-nav-link'}${item.attention ? ' admin-attention-link' : ''}`}
+              className={isActive(item) ? 'admin-nav-link active' : 'admin-nav-link'}
               href={item.href}
               key={item.href}
             >
