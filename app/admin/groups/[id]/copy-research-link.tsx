@@ -24,6 +24,7 @@ export default function CopyResearchLink({ url }: { url: string }) {
         {copied ? 'Copied ✓' : 'Copy Research Link'}
       </button>
       <Link className="button button-secondary button-small" href={`${pathname}/edit`}>Edit Submission</Link>
+      <Link className="button button-secondary button-small" href={`${pathname}/record`}>Record Options</Link>
     </>
   )
 }
