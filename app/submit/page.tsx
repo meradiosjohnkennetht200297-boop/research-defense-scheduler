@@ -11,6 +11,7 @@ export default async function SubmitResearchPage() {
   const { data } = await supabase
     .from('faculty')
     .select('id, full_name')
+    .eq('is_active', true)
     .order('full_name', { ascending: true })
 
   return (
