@@ -1,0 +1,186 @@
+.admin-heading {
+  align-items: center;
+}
+
+.admin-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-actions form {
+  margin: 0;
+}
+
+.dashboard-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.stat-link {
+  color: inherit;
+  transition: transform 120ms ease, border-color 120ms ease;
+}
+
+.stat-link:hover {
+  transform: translateY(-2px);
+  border-color: #c9ced6;
+}
+
+.stat-link small {
+  display: block;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.admin-two-column {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.72fr) minmax(0, 1.28fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.faculty-add-card {
+  position: sticky;
+  top: 94px;
+  padding: 22px;
+}
+
+.muted-copy {
+  margin-bottom: 20px;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+.faculty-form,
+.faculty-edit-form {
+  display: grid;
+  gap: 14px;
+}
+
+.faculty-form .button {
+  width: 100%;
+  margin-top: 2px;
+}
+
+.optional {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.faculty-list {
+  display: grid;
+  gap: 14px;
+}
+
+.faculty-card {
+  padding: 20px;
+}
+
+.faculty-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.faculty-card-head form {
+  margin: 0;
+}
+
+.faculty-edit-form {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-items: end;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 9px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.status-active {
+  background: #eff9f3;
+  color: var(--success);
+}
+
+.status-inactive {
+  background: var(--surface-soft);
+  color: var(--muted);
+}
+
+.compact-empty {
+  padding: 32px 22px;
+}
+
+@media (max-width: 900px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-two-column {
+    grid-template-columns: 1fr;
+  }
+
+  .faculty-add-card {
+    position: static;
+  }
+
+  .faculty-edit-form {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .faculty-edit-form .button {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+}
+
+@media (max-width: 620px) {
+  .admin-heading {
+    align-items: stretch;
+  }
+
+  .admin-actions {
+    width: 100%;
+  }
+
+  .admin-actions > * {
+    flex: 1;
+  }
+
+  .admin-actions .button {
+    width: 100%;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .faculty-card {
+    padding: 16px;
+  }
+
+  .faculty-card-head {
+    align-items: flex-start;
+  }
+
+  .faculty-edit-form {
+    grid-template-columns: 1fr;
+  }
+
+  .faculty-edit-form .button {
+    grid-column: auto;
+    width: 100%;
+  }
+}
