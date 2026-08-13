@@ -21,15 +21,28 @@ type PanelAssignmentRow = {
   sort_order: number
 }
 
+type DefenseType = 'title' | 'proposal' | 'final'
+
+function defenseTypeLabel(value: DefenseType | null) {
+  if (value === 'title') return 'Title Defense'
+  if (value === 'proposal') return 'Proposal Defense'
+  if (value === 'final') return 'Final Defense'
+  return 'Not recorded'
+}
+
+function scheduleHasEnded(date: string, endTime: string) {
+  return new Date(`${date}T${String(endTime).slice(0, 8)}+08:00`).getTime() <= Date.now()
+}
+
 export default async function ResearchGroupWorkspace({
   params,
   searchParams,
 }: {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ error?: string; saved?: string }>
+  searchParams: Promise<{ error?: string; saved?: string; reschedule?: string }>
 }) {
   const { id } = await params
-  const { error, saved } = await searchParams
+  const { error, saved, reschedule } = await searchParams
   const supabase = await createClient()
   const { data: claimsData } = await supabase.auth.getClaims()
   const userId = claimsData?.claims?.sub
@@ -48,7 +61,7 @@ export default async function ResearchGroupWorkspace({
   const [groupResult, membersResult, scheduleResult, facultyResult] = await Promise.all([
     supabase
       .from('research_groups')
-      .select('id, public_code, title, program, major, research_file_url, contact_person, contact_email, contact_number, instructor_id, adviser_id, status, submitted_at')
+      .select('id, public_code, title, program, major, defense_type, research_file_url, contact_person, contact_email, contact_number, instructor_id, adviser_id, status, submitted_at')
       .eq('id', id)
       .maybeSingle(),
     supabase
@@ -94,9 +107,14 @@ export default async function ResearchGroupWorkspace({
   const instructorName = group.instructor_id ? facultyNames.get(group.instructor_id) ?? 'Not found' : 'Not assigned'
   const adviserName = group.adviser_id ? facultyNames.get(group.adviser_id) ?? 'Not found' : 'Not assigned'
   const programLabel = group.program ? `${group.program}${group.major ? ` - ${group.major}` : ''}` : 'Not recorded'
+  const currentDefenseType = (group.defense_type as DefenseType | null) ?? null
   const dateValue = schedule?.defense_date ?? ''
   const startValue = schedule?.start_time ? String(schedule.start_time).slice(0, 5) : ''
   const endValue = schedule?.end_time ? String(schedule.end_time).slice(0, 5) : ''
+  const hasEnded = Boolean(
+    schedule?.defense_date && schedule?.end_time && scheduleHasEnded(schedule.defense_date, schedule.end_time)
+  )
+  const needsConfirmation = hasEnded && group.status === 'scheduled'
 
   return (
     <section className="section">
@@ -110,6 +128,16 @@ export default async function ResearchGroupWorkspace({
 
         {saved ? <div className="alert alert-success">Defense schedule saved successfully.</div> : null}
         {error ? <div className="alert alert-error">{error}</div> : null}
+        {needsConfirmation ? (
+          <div className="alert alert-warning">
+            This defense has reached its scheduled end time and is no longer shown publicly. If it was completed, confirm it from the dashboard. If it did not proceed, enter a new date and time below and save to reschedule it.
+          </div>
+        ) : null}
+        {reschedule ? (
+          <div className="alert alert-warning">
+            Update the date and time below, keep the status as Scheduled, then save the schedule.
+          </div>
+        ) : null}
 
         <div className="workspace-grid">
           <aside className="workspace-side">
@@ -134,6 +162,10 @@ export default async function ResearchGroupWorkspace({
                 <div>
                   <dt>Status</dt>
                   <dd><span className={`status-pill status-${group.status}`}>{group.status}</span></dd>
+                </div>
+                <div>
+                  <dt>Defense type</dt>
+                  <dd>{defenseTypeLabel(currentDefenseType)}</dd>
                 </div>
                 <div>
                   <dt>Program</dt>
@@ -186,21 +218,26 @@ export default async function ResearchGroupWorkspace({
                 <p className="eyebrow">Defense Schedule</p>
                 <h2>{schedule ? 'Edit defense assignment' : 'Create defense assignment'}</h2>
               </div>
-              <span className={schedule?.is_published ? 'status-pill status-published' : 'status-pill'}>
-                {schedule?.is_published ? 'Published' : 'Not published'}
+              <span className={schedule?.is_published && !hasEnded ? 'status-pill status-published' : 'status-pill'}>
+                {schedule?.is_published && !hasEnded ? 'Published' : hasEnded ? 'Ended' : 'Not published'}
               </span>
             </div>
 
             <div className="form-section compact-section">
-              <h3>Date, time, and venue</h3>
+              <h3>Defense type, date, time, and venue</h3>
               <div className="field-grid">
+                <div className="field">
+                  <label htmlFor="defenseType">Defense type</label>
+                  <select defaultValue={currentDefenseType ?? ''} id="defenseType" name="defenseType" required>
+                    <option value="">Select defense type</option>
+                    <option value="title">Title Defense</option>
+                    <option value="proposal">Proposal Defense</option>
+                    <option value="final">Final Defense</option>
+                  </select>
+                </div>
                 <div className="field">
                   <label htmlFor="defenseDate">Defense date</label>
                   <input defaultValue={dateValue} id="defenseDate" name="defenseDate" required type="date" />
-                </div>
-                <div className="field">
-                  <label htmlFor="venue">Venue</label>
-                  <input defaultValue={schedule?.venue ?? ''} id="venue" maxLength={180} name="venue" placeholder="e.g., AVR" required />
                 </div>
                 <div className="field">
                   <label htmlFor="startTime">Start time</label>
@@ -208,7 +245,11 @@ export default async function ResearchGroupWorkspace({
                 </div>
                 <div className="field">
                   <label htmlFor="endTime">End time</label>
-                  <input defaultValue={endValue} id="endTime" name="endTime" type="time" />
+                  <input defaultValue={endValue} id="endTime" name="endTime" required type="time" />
+                </div>
+                <div className="field full">
+                  <label htmlFor="venue">Venue</label>
+                  <input defaultValue={schedule?.venue ?? ''} id="venue" maxLength={180} name="venue" placeholder="e.g., AVR" required />
                 </div>
               </div>
             </div>
@@ -258,7 +299,7 @@ export default async function ResearchGroupWorkspace({
                   <input defaultChecked={schedule?.is_published ?? false} id="isPublished" name="isPublished" type="checkbox" />
                   <span>
                     <strong>Publish schedule</strong>
-                    <small>Show this defense on the public schedule.</small>
+                    <small>Show this defense publicly until its scheduled end time.</small>
                   </span>
                 </label>
               </div>
@@ -270,7 +311,7 @@ export default async function ResearchGroupWorkspace({
             </div>
 
             <div className="form-actions schedule-actions">
-              <p className="form-note">Panel selections must be unique. Duplicate selections are automatically ignored when saving.</p>
+              <p className="form-note">Ended published schedules are hidden automatically. If a defense does not proceed, change its date and time here to reschedule it.</p>
               <button className="button" type="submit">Save Schedule</button>
             </div>
           </form>
