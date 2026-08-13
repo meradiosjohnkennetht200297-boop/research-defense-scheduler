@@ -6,6 +6,7 @@ const GOOGLE_FILE_HOSTS = new Set(['drive.google.com', 'docs.google.com'])
 const PROGRAMS = new Set(['BEED', 'BSED', 'BSA', 'BSAIS', 'BSBA'])
 const BSED_MAJORS = new Set(['English', 'Filipino', 'Mathematics', 'Science'])
 const BSBA_MAJORS = new Set(['MM', 'FM', 'HRM'])
+const DEFENSE_TYPES = new Set(['title', 'proposal', 'final'])
 
 function cleanOptionalText(value: unknown, maxLength: number) {
   if (typeof value !== 'string') return null
@@ -38,6 +39,7 @@ export async function POST(request: Request) {
     const body = await request.json()
 
     const title = cleanOptionalText(body.title, 500)
+    const defenseType = typeof body.defenseType === 'string' ? body.defenseType.trim().toLowerCase() : ''
     const program = typeof body.program === 'string' ? body.program.trim().toUpperCase() : ''
     const major = cleanOptionalText(body.major, 40)
     const researchFileUrl = cleanGoogleFileUrl(body.researchFileUrl)
@@ -60,6 +62,10 @@ export async function POST(request: Request) {
         { error: 'Research title, contact person, and at least one group member are required.' },
         { status: 400 }
       )
+    }
+
+    if (!DEFENSE_TYPES.has(defenseType)) {
+      return NextResponse.json({ error: 'Please select a valid defense type.' }, { status: 400 })
     }
 
     if (!PROGRAMS.has(program)) {
@@ -94,6 +100,7 @@ export async function POST(request: Request) {
       p_research_file_url: researchFileUrl,
       p_program: program,
       p_major: normalizedMajor,
+      p_defense_type: defenseType,
       p_members: members,
     })
 
