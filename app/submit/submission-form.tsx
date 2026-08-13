@@ -7,8 +7,12 @@ type Faculty = {
   full_name: string
 }
 
+const BSED_MAJORS = ['English', 'Filipino', 'Mathematics', 'Science']
+const BSBA_MAJORS = ['MM', 'FM', 'HRM']
+
 export default function SubmissionForm({ faculty }: { faculty: Faculty[] }) {
   const [members, setMembers] = useState(['', '', ''])
+  const [program, setProgram] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [successCode, setSuccessCode] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -45,6 +49,8 @@ export default function SubmissionForm({ faculty }: { faculty: Faculty[] }) {
 
     const payload = {
       title: String(form.get('title') ?? '').trim(),
+      program: String(form.get('program') ?? '').trim(),
+      major: String(form.get('major') ?? '').trim() || null,
       researchFileUrl: String(form.get('researchFileUrl') ?? '').trim(),
       contactPerson: String(form.get('contactPerson') ?? '').trim(),
       contactEmail: String(form.get('contactEmail') ?? '').trim(),
@@ -70,6 +76,7 @@ export default function SubmissionForm({ faculty }: { faculty: Faculty[] }) {
       setSuccessCode(result.publicCode)
       formElement.reset()
       setMembers(['', '', ''])
+      setProgram('')
     } catch (submissionError) {
       setError(
         submissionError instanceof Error
@@ -80,6 +87,8 @@ export default function SubmissionForm({ faculty }: { faculty: Faculty[] }) {
       setSubmitting(false)
     }
   }
+
+  const majorOptions = program === 'BSED' ? BSED_MAJORS : program === 'BSBA' ? BSBA_MAJORS : []
 
   return (
     <form className="card form-shell" onSubmit={handleSubmit}>
@@ -99,6 +108,37 @@ export default function SubmissionForm({ faculty }: { faculty: Faculty[] }) {
             <label htmlFor="title">Research title</label>
             <textarea id="title" name="title" maxLength={500} required />
           </div>
+
+          <div className="field">
+            <label htmlFor="program">Program</label>
+            <select
+              id="program"
+              name="program"
+              value={program}
+              onChange={(event) => setProgram(event.target.value)}
+              required
+            >
+              <option value="">Select program</option>
+              <option value="BEED">BEED</option>
+              <option value="BSED">BSED</option>
+              <option value="BSA">BSA</option>
+              <option value="BSAIS">BSAIS</option>
+              <option value="BSBA">BSBA</option>
+            </select>
+          </div>
+
+          {majorOptions.length > 0 ? (
+            <div className="field">
+              <label htmlFor="major">Major</label>
+              <select id="major" name="major" defaultValue="" required>
+                <option value="">Select major</option>
+                {majorOptions.map((major) => (
+                  <option key={major} value={major}>{major}</option>
+                ))}
+              </select>
+            </div>
+          ) : null}
+
           <div className="field full">
             <label htmlFor="researchFileUrl">Google Drive research file link</label>
             <input
