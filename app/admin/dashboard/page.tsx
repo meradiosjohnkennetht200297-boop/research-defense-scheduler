@@ -1,10 +1,10 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { logoutAdmin } from '../actions'
 import { markDefenseCompleted } from './actions'
 
 type DefenseType = 'title' | 'proposal' | 'final'
+type ResearchStatus = 'pending' | 'scheduled' | 'completed' | 'cancelled'
 type ResearchGroupRow = {
   id: string
   public_code: string
@@ -12,8 +12,7 @@ type ResearchGroupRow = {
   program: string | null
   major: string | null
   defense_type: DefenseType | null
-  contact_person: string
-  status: 'pending' | 'scheduled' | 'completed' | 'cancelled'
+  status: ResearchStatus
   submitted_at: string
 }
 type ScheduleGroup = {
@@ -21,7 +20,7 @@ type ScheduleGroup = {
   public_code: string
   title: string
   defense_type: DefenseType | null
-  status: string
+  status: ResearchStatus
 }
 type ScheduleRow = {
   id: string
@@ -29,9 +28,12 @@ type ScheduleRow = {
   defense_date: string
   start_time: string
   end_time: string
+  venue: string
   is_published: boolean
   research_groups: ScheduleGroup | ScheduleGroup[] | null
 }
+
+const STATUS_FILTERS = new Set<ResearchStatus>(['pending', 'scheduled', 'completed', 'cancelled'])
 
 function one<T>(value: T | T[] | null | undefined): T | null {
   if (!value) return null
@@ -45,8 +47,32 @@ function defenseTypeLabel(value: DefenseType | null) {
   return 'Not recorded'
 }
 
+function scheduleTimestamp(date: string, time: string) {
+  return new Date(`${date}T${String(time).slice(0, 8)}+08:00`).getTime()
+}
+
 function scheduleHasEnded(date: string, endTime: string) {
-  return new Date(`${date}T${String(endTime).slice(0, 8)}+08:00`).getTime() <= Date.now()
+  return scheduleTimestamp(date, endTime) <= Date.now()
+}
+
+function formatScheduleDate(date: string) {
+  const [year, month, day] = date.split('-').map(Number)
+  return new Intl.DateTimeFormat('en-PH', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(new Date(Date.UTC(year, month - 1, day)))
+}
+
+function formatTime(value: string) {
+  const [hourText, minuteText] = value.split(':')
+  let hour = Number(hourText)
+  const minute = minuteText ?? '00'
+  const suffix = hour >= 12 ? 'PM' : 'AM'
+  hour %= 12
+  if (hour === 0) hour = 12
+  return `${hour}:${minute} ${suffix}`
 }
 
 function formatEndedAt(date: string, endTime: string) {
@@ -58,12 +84,28 @@ function formatEndedAt(date: string, endTime: string) {
   }).format(value)
 }
 
+function manilaTodayKey() {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    timeZone: 'Asia/Manila',
+  }).formatToParts(new Date())
+
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]))
+  return `${values.year}-${values.month}-${values.day}`
+}
+
 export default async function AdminDashboard({
   searchParams,
 }: {
-  searchParams: Promise<{ confirmed?: string; error?: string }>
+  searchParams: Promise<{ confirmed?: string; error?: string; status?: string }>
 }) {
   const params = await searchParams
+  const statusFilter = STATUS_FILTERS.has(params.status as ResearchStatus)
+    ? (params.status as ResearchStatus)
+    : null
+
   const supabase = await createClient()
   const { data: claimsData } = await supabase.auth.getClaims()
   const userId = claimsData?.claims?.sub
@@ -79,16 +121,20 @@ export default async function AdminDashboard({
 
   if (!adminProfile) redirect('/admin')
 
-  const [allCount, pendingCount, scheduledCount, facultyCount, recentGroups, scheduleResult] = await Promise.all([
+  let recentGroupsQuery = supabase
+    .from('research_groups')
+    .select('id, public_code, title, program, major, defense_type, status, submitted_at')
+    .order('submitted_at', { ascending: false })
+    .limit(20)
+
+  if (statusFilter) recentGroupsQuery = recentGroupsQuery.eq('status', statusFilter)
+
+  const [allCount, pendingCount, scheduledCount, completedCount, recentGroups, scheduleResult] = await Promise.all([
     supabase.from('research_groups').select('*', { count: 'exact', head: true }),
     supabase.from('research_groups').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
     supabase.from('research_groups').select('*', { count: 'exact', head: true }).eq('status', 'scheduled'),
-    supabase.from('faculty').select('*', { count: 'exact', head: true }).eq('is_active', true),
-    supabase
-      .from('research_groups')
-      .select('id, public_code, title, program, major, defense_type, contact_person, status, submitted_at')
-      .order('submitted_at', { ascending: false })
-      .limit(20),
+    supabase.from('research_groups').select('*', { count: 'exact', head: true }).eq('status', 'completed'),
+    recentGroupsQuery,
     supabase
       .from('defense_schedules')
       .select(`
@@ -97,6 +143,7 @@ export default async function AdminDashboard({
         defense_date,
         start_time,
         end_time,
+        venue,
         is_published,
         research_groups (
           id,
@@ -106,68 +153,110 @@ export default async function AdminDashboard({
           status
         )
       `)
-      .order('defense_date', { ascending: false })
-      .order('end_time', { ascending: false }),
+      .order('defense_date', { ascending: true })
+      .order('start_time', { ascending: true }),
   ])
 
   const groups = (recentGroups.data ?? []) as ResearchGroupRow[]
   const scheduleRows = (scheduleResult.data ?? []) as ScheduleRow[]
+  const now = Date.now()
+  const todayKey = manilaTodayKey()
+
   const confirmationQueue = scheduleRows.filter((schedule) => {
     const group = one(schedule.research_groups)
     return group?.status === 'scheduled' && scheduleHasEnded(schedule.defense_date, schedule.end_time)
   })
 
+  const activeSchedules = scheduleRows
+    .filter((schedule) => {
+      const group = one(schedule.research_groups)
+      return group?.status === 'scheduled' && scheduleTimestamp(schedule.defense_date, schedule.end_time) > now
+    })
+    .sort(
+      (a, b) =>
+        scheduleTimestamp(a.defense_date, a.start_time) - scheduleTimestamp(b.defense_date, b.start_time)
+    )
+
+  const todaySchedules = activeSchedules.filter((schedule) => schedule.defense_date === todayKey)
+  const upcomingSchedules = activeSchedules.slice(0, 5)
+
+  const stats = [
+    {
+      label: 'Total submissions',
+      value: allCount.count ?? 0,
+      href: '/admin/dashboard#research-groups',
+      note: 'View recent groups',
+      tone: 'neutral',
+    },
+    {
+      label: 'Pending',
+      value: pendingCount.count ?? 0,
+      href: '/admin/dashboard?status=pending#research-groups',
+      note: 'Needs scheduling',
+      tone: 'pending',
+    },
+    {
+      label: 'Scheduled',
+      value: scheduledCount.count ?? 0,
+      href: '/admin/dashboard?status=scheduled#research-groups',
+      note: 'View scheduled groups',
+      tone: 'scheduled',
+    },
+    {
+      label: 'Completed',
+      value: completedCount.count ?? 0,
+      href: '/admin/dashboard?status=completed#research-groups',
+      note: 'View completed groups',
+      tone: 'completed',
+    },
+    {
+      label: 'Action required',
+      value: confirmationQueue.length,
+      href: confirmationQueue.length ? '/admin/dashboard#action-required' : '/admin/dashboard#upcoming-defenses',
+      note: confirmationQueue.length ? 'Confirm or reschedule' : 'Nothing waiting',
+      tone: confirmationQueue.length ? 'warning' : 'clear',
+    },
+  ]
+
   return (
-    <section className="section">
+    <section className="section admin-dashboard-page">
       <div className="container">
-        <div className="section-heading admin-heading">
+        <div className="dashboard-heading">
           <div>
             <p className="eyebrow">Admin Dashboard</p>
             <h2>Research defense management</h2>
-            <p>Signed in as {adminProfile.display_name}</p>
+            <p className="dashboard-intro">
+              Manage submissions, schedules, and follow-up actions from one workspace.
+            </p>
           </div>
-          <div className="admin-actions">
-            <Link className="button button-secondary button-small" href="/admin/faculty">
-              Manage Faculty
-            </Link>
-            <form action={logoutAdmin}>
-              <button className="button button-secondary button-small" type="submit">Sign out</button>
-            </form>
+          <div className="admin-session-chip">
+            <span>Signed in as</span>
+            <strong>{adminProfile.display_name}</strong>
           </div>
         </div>
 
         {params.confirmed ? <div className="alert alert-success">Defense marked as completed.</div> : null}
         {params.error ? <div className="alert alert-error">{params.error}</div> : null}
 
-        <div className="dashboard-grid dashboard-grid-four">
-          <div className="card stat-card">
-            <span>Total submissions</span>
-            <strong>{allCount.count ?? 0}</strong>
-          </div>
-          <div className="card stat-card">
-            <span>Pending</span>
-            <strong>{pendingCount.count ?? 0}</strong>
-          </div>
-          <div className="card stat-card">
-            <span>Scheduled</span>
-            <strong>{scheduledCount.count ?? 0}</strong>
-          </div>
-          <Link className="card stat-card stat-link" href="/admin/faculty">
-            <span>Active faculty</span>
-            <strong>{facultyCount.count ?? 0}</strong>
-            <small>Manage directory →</small>
-          </Link>
+        <div className="dashboard-stats" aria-label="Research defense summary">
+          {stats.map((stat) => (
+            <Link className={`card dashboard-stat-card stat-${stat.tone}`} href={stat.href} key={stat.label}>
+              <span>{stat.label}</span>
+              <strong>{stat.value}</strong>
+              <small>{stat.note} →</small>
+            </Link>
+          ))}
         </div>
 
         {confirmationQueue.length > 0 ? (
-          <div className="card confirmation-panel">
+          <section className="card confirmation-panel" id="action-required">
             <div className="confirmation-panel-head">
               <div>
                 <p className="eyebrow">Action Required</p>
                 <h3>Confirm ended defenses</h3>
-                <p>These defenses have passed their scheduled end time and are already hidden from the public schedule.</p>
+                <p>These defenses are already hidden from the public schedule. Confirm completion or reschedule them.</p>
               </div>
-              <span className="status-pill status-warning">{confirmationQueue.length} pending</span>
+              <span className="status-pill status-warning">{confirmationQueue.length} waiting</span>
             </div>
 
             <div className="confirmation-list">
@@ -177,7 +266,7 @@ export default async function AdminDashboard({
 
                 return (
                   <div className="confirmation-item" key={schedule.id}>
-                    <div>
+                    <div className="confirmation-copy">
                       <div className="schedule-labels">
                         <span className="code">{group.public_code}</span>
                         <span className="defense-type-pill">{defenseTypeLabel(group.defense_type)}</span>
@@ -198,53 +287,151 @@ export default async function AdminDashboard({
                 )
               })}
             </div>
-          </div>
+          </section>
         ) : null}
 
-        <div className="card table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Code</th>
-                <th>Research title</th>
-                <th>Defense</th>
-                <th>Program</th>
-                <th>Contact</th>
-                <th>Status</th>
-                <th>Submitted</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {groups.length === 0 ? (
-                <tr>
-                  <td colSpan={8}>No research submissions yet.</td>
-                </tr>
+        <section className="dashboard-section" id="upcoming-defenses">
+          <div className="dashboard-section-heading">
+            <div>
+              <p className="eyebrow">Schedule Overview</p>
+              <h3>Today and upcoming defenses</h3>
+            </div>
+            <Link className="button button-secondary button-small" href="/#schedule">Open Public Schedule ↗</Link>
+          </div>
+
+          <div className="dashboard-schedule-grid">
+            <div className="card dashboard-panel">
+              <div className="dashboard-panel-head">
+                <div>
+                  <span className="dashboard-panel-kicker">Today</span>
+                  <strong>{todaySchedules.length} {todaySchedules.length === 1 ? 'defense' : 'defenses'}</strong>
+                </div>
+                <span className="dashboard-date-label">{formatScheduleDate(todayKey)}</span>
+              </div>
+
+              {todaySchedules.length === 0 ? (
+                <div className="dashboard-mini-empty">
+                  <strong>No defenses remaining today.</strong>
+                  <span>Upcoming schedules will appear in the next panel.</span>
+                </div>
               ) : (
-                groups.map((group) => (
-                  <tr key={group.id}>
-                    <td><span className="code">{group.public_code}</span></td>
-                    <td>
-                      <Link className="table-link" href={`/admin/groups/${group.id}`}>
-                        {group.title}
+                <div className="dashboard-defense-list">
+                  {todaySchedules.map((schedule) => {
+                    const group = one(schedule.research_groups)
+                    if (!group) return null
+                    return (
+                      <Link className="dashboard-defense-row" href={`/admin/groups/${group.id}`} key={schedule.id}>
+                        <span className="dashboard-defense-time">{formatTime(schedule.start_time)}</span>
+                        <span className="dashboard-defense-copy">
+                          <strong>{group.title}</strong>
+                          <small>{defenseTypeLabel(group.defense_type)} · {schedule.venue}</small>
+                        </span>
+                        <span aria-hidden="true">→</span>
                       </Link>
-                    </td>
-                    <td>{defenseTypeLabel(group.defense_type)}</td>
-                    <td>{group.program ? `${group.program}${group.major ? ` - ${group.major}` : ''}` : 'Not recorded'}</td>
-                    <td>{group.contact_person}</td>
-                    <td><span className={`status-pill status-${group.status}`}>{group.status}</span></td>
-                    <td>{new Intl.DateTimeFormat('en-PH', { dateStyle: 'medium' }).format(new Date(group.submitted_at))}</td>
-                    <td>
-                      <Link className="button button-secondary button-small" href={`/admin/groups/${group.id}`}>
-                        Open
-                      </Link>
-                    </td>
-                  </tr>
-                ))
+                    )
+                  })}
+                </div>
               )}
-            </tbody>
-          </table>
-        </div>
+            </div>
+
+            <div className="card dashboard-panel">
+              <div className="dashboard-panel-head">
+                <div>
+                  <span className="dashboard-panel-kicker">Upcoming</span>
+                  <strong>Next scheduled defenses</strong>
+                </div>
+                <span className="dashboard-date-label">{upcomingSchedules.length} listed</span>
+              </div>
+
+              {upcomingSchedules.length === 0 ? (
+                <div className="dashboard-mini-empty">
+                  <strong>No upcoming defenses.</strong>
+                  <span>Schedule a pending research group to see it here.</span>
+                </div>
+              ) : (
+                <div className="dashboard-defense-list">
+                  {upcomingSchedules.map((schedule, index) => {
+                    const group = one(schedule.research_groups)
+                    if (!group) return null
+                    return (
+                      <Link className="dashboard-defense-row" href={`/admin/groups/${group.id}`} key={schedule.id}>
+                        <span className="dashboard-defense-date">
+                          {index === 0 ? <em>Next</em> : null}
+                          {formatScheduleDate(schedule.defense_date)}
+                          <small>{formatTime(schedule.start_time)}</small>
+                        </span>
+                        <span className="dashboard-defense-copy">
+                          <strong>{group.title}</strong>
+                          <small>{defenseTypeLabel(group.defense_type)} · {schedule.venue}</small>
+                        </span>
+                        <span aria-hidden="true">→</span>
+                      </Link>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+
+        <section className="dashboard-section" id="research-groups">
+          <div className="dashboard-section-heading">
+            <div>
+              <p className="eyebrow">Research Groups</p>
+              <h3>{statusFilter ? `${statusFilter[0].toUpperCase()}${statusFilter.slice(1)} submissions` : 'Recent submissions'}</h3>
+              <p>Showing up to 20 of the most recent matching research groups.</p>
+            </div>
+            {statusFilter ? (
+              <Link className="button button-secondary button-small" href="/admin/dashboard#research-groups">Clear Filter</Link>
+            ) : null}
+          </div>
+
+          <div className="card table-wrap dashboard-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Research</th>
+                  <th className="hide-mobile">Program</th>
+                  <th>Defense</th>
+                  <th>Status</th>
+                  <th className="hide-mobile">Submitted</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {groups.length === 0 ? (
+                  <tr>
+                    <td colSpan={6}>No research submissions match this view.</td>
+                  </tr>
+                ) : (
+                  groups.map((group) => (
+                    <tr key={group.id}>
+                      <td className="research-cell">
+                        <span className="code">{group.public_code}</span>
+                        <Link className="table-link" href={`/admin/groups/${group.id}`}>
+                          {group.title}
+                        </Link>
+                      </td>
+                      <td className="hide-mobile">
+                        {group.program ? `${group.program}${group.major ? ` - ${group.major}` : ''}` : 'Not recorded'}
+                      </td>
+                      <td>{defenseTypeLabel(group.defense_type)}</td>
+                      <td><span className={`status-pill status-${group.status}`}>{group.status}</span></td>
+                      <td className="hide-mobile">
+                        {new Intl.DateTimeFormat('en-PH', { dateStyle: 'medium' }).format(new Date(group.submitted_at))}
+                      </td>
+                      <td>
+                        <Link className="button button-secondary button-small" href={`/admin/groups/${group.id}`}>
+                          Open
+                        </Link>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
       </div>
     </section>
   )
