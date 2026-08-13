@@ -10,13 +10,14 @@ type PanelAssignment = {
 type ResearchGroup = {
   public_code: string
   title: string
+  defense_type: 'title' | 'proposal' | 'final' | null
   status: string
 }
 type ScheduleRow = {
   id: string
   defense_date: string
   start_time: string
-  end_time: string | null
+  end_time: string
   venue: string
   research_groups: ResearchGroup | ResearchGroup[] | null
   panel_assignments: PanelAssignment[] | null
@@ -49,6 +50,13 @@ function formatTime(value: string | null) {
   return `${hour}:${minute} ${suffix}`
 }
 
+function defenseTypeLabel(value: ResearchGroup['defense_type']) {
+  if (value === 'title') return 'Title Defense'
+  if (value === 'proposal') return 'Proposal Defense'
+  if (value === 'final') return 'Final Defense'
+  return 'Research Defense'
+}
+
 export default async function Home() {
   const supabase = await createClient()
 
@@ -63,6 +71,7 @@ export default async function Home() {
       research_groups (
         public_code,
         title,
+        defense_type,
         status
       ),
       panel_assignments (
@@ -115,8 +124,8 @@ export default async function Home() {
             </div>
           ) : schedules.length === 0 ? (
             <div className="card empty-state">
-              <h3>No defense schedule has been published yet.</h3>
-              <p>Once the administrator publishes a schedule, it will automatically appear here.</p>
+              <h3>No upcoming defense schedule is currently published.</h3>
+              <p>Published defenses appear here until their scheduled end time.</p>
             </div>
           ) : (
             <div className="schedule-list">
@@ -131,15 +140,16 @@ export default async function Home() {
                     <div>
                       <span className="schedule-date">{formatDate(schedule.defense_date)}</span>
                       <span className="schedule-time">
-                        {formatTime(schedule.start_time)}
-                        {schedule.end_time ? ` – ${formatTime(schedule.end_time)}` : ''}
+                        {formatTime(schedule.start_time)} – {formatTime(schedule.end_time)}
                       </span>
                     </div>
 
                     <div className="schedule-title">
-                      {group?.public_code ? <span className="code">{group.public_code}</span> : null}
+                      <div className="schedule-labels">
+                        {group?.public_code ? <span className="code">{group.public_code}</span> : null}
+                        <span className="defense-type-pill">{defenseTypeLabel(group?.defense_type ?? null)}</span>
+                      </div>
                       <h3 style={{ marginTop: 10 }}>{group?.title ?? 'Research Defense'}</h3>
-                      <p>Status: {group?.status ?? 'scheduled'}</p>
                     </div>
 
                     <div className="schedule-meta">
