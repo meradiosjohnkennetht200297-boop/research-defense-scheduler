@@ -45,6 +45,7 @@ export default function SubmissionForm({ faculty }: { faculty: Faculty[] }) {
 
     const payload = {
       title: String(form.get('title') ?? '').trim(),
+      researchFileUrl: String(form.get('researchFileUrl') ?? '').trim(),
       contactPerson: String(form.get('contactPerson') ?? '').trim(),
       contactEmail: String(form.get('contactEmail') ?? '').trim(),
       contactNumber: String(form.get('contactNumber') ?? '').trim(),
@@ -97,6 +98,21 @@ export default function SubmissionForm({ faculty }: { faculty: Faculty[] }) {
           <div className="field full">
             <label htmlFor="title">Research title</label>
             <textarea id="title" name="title" maxLength={500} required />
+          </div>
+          <div className="field full">
+            <label htmlFor="researchFileUrl">Google Drive research file link</label>
+            <input
+              id="researchFileUrl"
+              name="researchFileUrl"
+              type="url"
+              inputMode="url"
+              maxLength={2048}
+              placeholder="https://drive.google.com/..."
+              required
+            />
+            <p className="field-help">
+              Set the Drive file or folder to Viewer access for the panelists who need it. Use a Google Drive or Google Docs link.
+            </p>
           </div>
         </div>
       </section>
