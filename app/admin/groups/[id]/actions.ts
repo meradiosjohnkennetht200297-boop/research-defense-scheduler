@@ -46,8 +46,14 @@ async function requireAdmin() {
 }
 
 function conflictRedirect(groupId: string, conflicts: ScheduleConflict[]) {
-  const value = encodeURIComponent(JSON.stringify(conflicts.slice(0, 12)))
-  redirect(`/admin/groups/${groupId}?conflicts=${value}`)
+  const details = conflicts.slice(0, 5).map((conflict) => {
+    if (conflict.kind === 'venue') {
+      return `Venue ${conflict.venue} overlaps with ${conflict.public_code} (${conflict.title})`
+    }
+    return `${conflict.faculty_name ?? 'A faculty member'} is already assigned to ${conflict.public_code} (${conflict.title}) as ${(conflict.existing_roles ?? []).join(', ') || 'faculty'}`
+  })
+  const message = `Schedule not saved because of conflict${conflicts.length === 1 ? '' : 's'}: ${details.join('; ')}.`
+  redirect(`/admin/groups/${groupId}?error=${encodeURIComponent(message)}`)
 }
 
 export async function saveDefenseSchedule(formData: FormData) {
