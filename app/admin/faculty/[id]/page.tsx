@@ -1,1 +1,1 @@
-export { default } from './page-v2-consistent'
+export { default } from './page-v3-minimal'
