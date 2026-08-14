@@ -13,7 +13,13 @@ function SubmitButton() {
   )
 }
 
-export default function CompleteDefenseForm({ groupId }: { groupId: string }) {
+export default function CompleteDefenseForm({
+  groupId,
+  returnTo = 'dashboard',
+}: {
+  groupId: string
+  returnTo?: 'dashboard' | 'schedule'
+}) {
   const [open, setOpen] = useState(false)
 
   if (!open) {
@@ -27,6 +33,7 @@ export default function CompleteDefenseForm({ groupId }: { groupId: string }) {
   return (
     <form action={confirmDefenseCompleted} className="completion-confirm-form">
       <input name="groupId" type="hidden" value={groupId} />
+      <input name="returnTo" type="hidden" value={returnTo} />
       <label htmlFor={`completion-note-${groupId}`}>
         Completion note <span>Optional</span>
       </label>
