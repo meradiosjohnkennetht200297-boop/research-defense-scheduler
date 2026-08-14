@@ -105,6 +105,7 @@ export default async function ResearchGroupWorkspaceV2({
   const hasEnded = Boolean(schedule?.defense_date && schedule?.end_time && scheduleHasEnded(schedule.defense_date, schedule.end_time))
   const needsConfirmation = hasEnded && group.status === 'scheduled'
   const recordLocked = group.status === 'completed' || group.status === 'cancelled'
+  const statusLabel = group.status === 'cancelled' ? 'legacy cancelled' : group.status
   const scheduleState = schedule?.is_published && !hasEnded
     ? 'Published'
     : hasEnded
@@ -137,7 +138,7 @@ export default async function ResearchGroupWorkspaceV2({
             <div className="workspace-research-labels">
               <span className="code">{group.public_code}</span>
               <span className="defense-type-pill">{defenseTypeLabel(currentDefenseType)}</span>
-              <span className={`status-pill status-${group.status}`}>{group.status}</span>
+              <span className={`status-pill status-${group.status}`}>{statusLabel}</span>
             </div>
             <h1>{group.title}</h1>
             <p>{programLabel} · Adviser: {adviserName}</p>
@@ -152,7 +153,11 @@ export default async function ResearchGroupWorkspaceV2({
             ) : (
               <div className="workspace-file-missing">No research file submitted.</div>
             )}
-            <Link className="button button-secondary" href={`/admin/groups/${group.id}/edit`}>Edit Submission</Link>
+            {recordLocked ? (
+              <small>{group.status === 'completed' ? 'Completed record. Submission editing is disabled.' : 'Legacy Cancelled record. Editing is disabled.'}</small>
+            ) : (
+              <Link className="button button-secondary" href={`/admin/groups/${group.id}/edit`}>Edit Submission</Link>
+            )}
           </div>
         </div>
 

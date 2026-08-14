@@ -28,6 +28,13 @@ export default async function EditResearchSubmission({ params, searchParams }: {
 
   const group = groupResult.data
   if (!group) notFound()
+  if (group.status === 'completed') {
+    redirect(`/admin/groups/${group.id}?error=${encodeURIComponent('Completed research records are protected and cannot be edited.')}`)
+  }
+  if (group.status === 'cancelled') {
+    redirect(`/admin/groups/${group.id}?error=${encodeURIComponent('Legacy Cancelled records are protected and cannot be edited.')}`)
+  }
+
   const memberNames = ((membersResult.data ?? []) as MemberRow[]).sort((a, b) => a.sort_order - b.sort_order).map((member) => member.full_name)
   const faculty = (facultyResult.data ?? []) as FacultyRow[]
 
@@ -50,8 +57,8 @@ export default async function EditResearchSubmission({ params, searchParams }: {
           </div>
         </div>
 
-        {group.status !== 'pending' ? (
-          <div className="alert alert-warning">This research is already {group.status}. Changes here update submission information only. The defense schedule, panel assignment, publication state, and completion record are not changed.</div>
+        {group.status === 'scheduled' ? (
+          <div className="alert alert-warning">This research is already scheduled. Changes here update submission information only. The defense schedule, panel assignment, and publication state are not changed.</div>
         ) : null}
 
         <EditResearchForm group={group} faculty={faculty} memberNames={memberNames} />
