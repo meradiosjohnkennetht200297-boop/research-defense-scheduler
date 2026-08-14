@@ -65,7 +65,6 @@ export async function saveDefenseSchedule(formData: FormData) {
   const venue = clean(formData.get('venue'))
   const notes = clean(formData.get('notes'))
   const chairId = clean(formData.get('chairId'))
-  const status = clean(formData.get('status'))
   const isPublished = formData.get('isPublished') === 'on'
   const memberIds = [...new Set(
     formData
@@ -89,8 +88,6 @@ export async function saveDefenseSchedule(formData: FormData) {
     redirect(`/admin/groups/${groupId}?error=${encodeURIComponent('End time must be later than start time.')}`)
   }
 
-  const allowedStatuses = new Set(['pending', 'scheduled', 'completed', 'cancelled'])
-  const nextStatus = allowedStatuses.has(status) ? status : 'scheduled'
   const supabase = await requireAdmin()
 
   const { data, error } = await supabase.rpc('save_defense_schedule_checked', {
@@ -103,7 +100,7 @@ export async function saveDefenseSchedule(formData: FormData) {
     p_notes: notes || null,
     p_chair_id: chairId,
     p_member_ids: memberIds,
-    p_status: nextStatus,
+    p_status: 'scheduled',
     p_is_published: isPublished,
   })
 
