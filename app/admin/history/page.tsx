@@ -163,7 +163,7 @@ export default async function CompletedDefenseHistory({ searchParams }: {
         <div className={styles.historyNotice}>
           <div>
             <strong>Completed records are read-only.</strong>
-            <span>The saved schedule, panel, completion audit, and research record are protected after confirmation.</span>
+            <span>Open a record when you need its full audit or research details.</span>
           </div>
           <Link className="button button-secondary button-small" href="/admin/groups?status=cancelled">
             Legacy Cancelled{legacyCount ? ` (${legacyCount})` : ''}
@@ -255,15 +255,25 @@ export default async function CompletedDefenseHistory({ searchParams }: {
                     <div><dt>Defense schedule</dt><dd>{formatDate(row.defense_date)} · {formatTime(row.start_time)}–{formatTime(row.end_time)}</dd></div>
                     <div><dt>Venue</dt><dd>{row.venue}</dd></div>
                     <div><dt>Panel chair</dt><dd>{chairName}</dd></div>
-                    <div><dt>Panel members</dt><dd>{memberNames.length ? memberNames.join(', ') : 'No panel members recorded'}</dd></div>
-                    <div><dt>Confirmed completed</dt><dd>{formatCompletedAt(row.completed_at)}</dd></div>
-                    <div><dt>Confirmed by</dt><dd>{row.completed_at ? completedBy : 'Not recorded for legacy completion'}</dd></div>
                   </dl>
 
-                  <div className={styles.note}>
-                    <span>Completion note</span>
-                    <p>{row.completion_note || 'No completion note was added.'}</p>
-                  </div>
+                  <details className={styles.auditDetails}>
+                    <summary>
+                      <span>Completion &amp; panel details</span>
+                      <small>{memberNames.length} {memberNames.length === 1 ? 'panel member' : 'panel members'} · audit available</small>
+                    </summary>
+                    <div className={styles.auditBody}>
+                      <dl className={styles.auditGrid}>
+                        <div><dt>Panel members</dt><dd>{memberNames.length ? memberNames.join(', ') : 'No panel members recorded'}</dd></div>
+                        <div><dt>Confirmed completed</dt><dd>{formatCompletedAt(row.completed_at)}</dd></div>
+                        <div><dt>Confirmed by</dt><dd>{row.completed_at ? completedBy : 'Not recorded for legacy completion'}</dd></div>
+                      </dl>
+                      <div className={styles.note}>
+                        <span>Completion note</span>
+                        <p>{row.completion_note || 'No completion note was added.'}</p>
+                      </div>
+                    </div>
+                  </details>
 
                   <div className={styles.cardFooter}>
                     <span className={styles.protected}>Protected record</span>

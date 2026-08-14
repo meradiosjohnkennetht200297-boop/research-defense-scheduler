@@ -170,17 +170,19 @@ export default async function ResearchGroupWorkspaceV2({
               {members.length ? <ol className="member-list workspace-member-list">{members.map((member) => <li key={member.id}>{member.full_name}</li>)}</ol> : <p className="muted-text">No group members recorded.</p>}
             </div>
 
-            <div className="card info-card workspace-info-card">
-              <div className="workspace-card-heading">
-                <div><h3>Submission contact</h3></div>
+            <details className="card info-card workspace-info-card disclosure-card">
+              <summary className="disclosure-summary">
+                <span><strong>Submission details</strong><small>Instructor and contact information</small></span>
+              </summary>
+              <div className="disclosure-body">
+                <dl className="detail-list">
+                  <div><dt>Research instructor</dt><dd>{instructorName}</dd></div>
+                  <div><dt>Contact person</dt><dd>{group.contact_person}</dd></div>
+                  {group.contact_email ? <div><dt>Email</dt><dd>{group.contact_email}</dd></div> : null}
+                  {group.contact_number ? <div><dt>Contact number</dt><dd>{group.contact_number}</dd></div> : null}
+                </dl>
               </div>
-              <dl className="detail-list">
-                <div><dt>Research instructor</dt><dd>{instructorName}</dd></div>
-                <div><dt>Contact person</dt><dd>{group.contact_person}</dd></div>
-                {group.contact_email ? <div><dt>Email</dt><dd>{group.contact_email}</dd></div> : null}
-                {group.contact_number ? <div><dt>Contact number</dt><dd>{group.contact_number}</dd></div> : null}
-              </dl>
-            </div>
+            </details>
           </aside>
 
           <form action={saveDefenseSchedule} className="card schedule-form workspace-refined-form">
@@ -254,10 +256,15 @@ export default async function ResearchGroupWorkspaceV2({
                     <small>Automatically hidden after the defense end time.</small>
                   </span>
                 </label>
-                <div className="field workspace-notes-field">
-                  <label htmlFor="notes">Notes <span className="optional-mark">Optional</span></label>
-                  <textarea defaultValue={schedule?.notes ?? ''} id="notes" maxLength={1000} name="notes" placeholder="Administrative notes" />
-                </div>
+                <details className="workspace-inline-disclosure" open={Boolean(schedule?.notes)}>
+                  <summary>Administrative notes {schedule?.notes ? '· Added' : '· Optional'}</summary>
+                  <div className="workspace-inline-disclosure-body">
+                    <div className="field workspace-notes-field">
+                      <label htmlFor="notes">Notes <span className="optional-mark">Optional</span></label>
+                      <textarea defaultValue={schedule?.notes ?? ''} id="notes" maxLength={1000} name="notes" placeholder="Administrative notes" />
+                    </div>
+                  </div>
+                </details>
               </section>
             </fieldset>
 

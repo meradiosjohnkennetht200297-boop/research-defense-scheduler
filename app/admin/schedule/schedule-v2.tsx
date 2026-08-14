@@ -118,8 +118,14 @@ function ScheduleCard({ schedule, mode }: { schedule: ScheduleRow; mode: 'active
       <dl className={styles.meta}>
         <div><dt>Venue</dt><dd>{schedule.venue}</dd></div>
         <div><dt>Chair</dt><dd>{panel.chair}</dd></div>
-        {panel.members.length ? <div><dt>Panel</dt><dd>{panel.members.join(', ')}</dd></div> : null}
       </dl>
+
+      {panel.members.length ? (
+        <details className={styles.moreDetails}>
+          <summary>Panel members <span>{panel.members.length}</span></summary>
+          <ul>{panel.members.map((name) => <li key={name}>{name}</li>)}</ul>
+        </details>
+      ) : null}
 
       <div className={styles.actions}>
         {mode === 'action' ? <CompleteDefenseForm groupId={group.id} returnTo="schedule" /> : null}
@@ -135,7 +141,7 @@ function ScheduleCard({ schedule, mode }: { schedule: ScheduleRow; mode: 'active
 }
 
 function ScheduleSection({
-  id, eyebrow, title, description, rows, mode, empty,
+  id, eyebrow, title, description, rows, mode, empty, collapsed = false,
 }: {
   id: string
   eyebrow: string
@@ -144,14 +150,31 @@ function ScheduleSection({
   rows: ScheduleRow[]
   mode: 'active' | 'action' | 'completed'
   empty: string
+  collapsed?: boolean
 }) {
+  const content = rows.length
+    ? <div className={styles.grid}>{rows.map((row) => <ScheduleCard key={row.id} mode={mode} schedule={row} />)}</div>
+    : <div className={styles.empty}>{empty}</div>
+
+  if (collapsed) {
+    return (
+      <details className={`${styles.section} ${styles.collapsibleSection}`} id={id}>
+        <summary className={styles.collapsibleHeading}>
+          <div><p className="eyebrow">{eyebrow}</p><h2>{title}</h2><p>{description}</p></div>
+          <span className="status-pill">{rows.length}</span>
+        </summary>
+        <div className={styles.collapsibleBody}>{content}</div>
+      </details>
+    )
+  }
+
   return (
     <section className={styles.section} id={id}>
       <div className={styles.sectionHeading}>
         <div><p className="eyebrow">{eyebrow}</p><h2>{title}</h2><p>{description}</p></div>
         <span className={mode === 'action' && rows.length ? 'status-pill status-warning' : 'status-pill'}>{rows.length}</span>
       </div>
-      {rows.length ? <div className={styles.grid}>{rows.map((row) => <ScheduleCard key={row.id} mode={mode} schedule={row} />)}</div> : <div className={styles.empty}>{empty}</div>}
+      {content}
     </section>
   )
 }
@@ -241,7 +264,7 @@ export default async function AdminDefenseScheduleV2({ searchParams }: {
         <ScheduleSection description="Defenses still in progress or scheduled later today." empty="No active defenses today." eyebrow="Today" id="today" mode="active" rows={todayRows} title="Today&apos;s defenses" />
         <ScheduleSection description="Future defense assignments in chronological order." empty="No upcoming defenses are scheduled." eyebrow="Upcoming" id="upcoming" mode="active" rows={upcoming} title="Upcoming defenses" />
         <ScheduleSection description="These defense times have passed. Confirm the defense if it took place, or reschedule it if it did not." empty="No ended defenses are waiting for confirmation." eyebrow="Action Required" id="action-required" mode="action" rows={actionRequired} title="Awaiting confirmation" />
-        <ScheduleSection description="The most recently confirmed completed defenses." empty="No completed defenses yet." eyebrow="Recent History" id="completed" mode="completed" rows={completed} title="Recently completed" />
+        <ScheduleSection collapsed description="The most recently confirmed completed defenses." empty="No completed defenses yet." eyebrow="Recent History" id="completed" mode="completed" rows={completed} title="Recently completed" />
       </div>
     </section>
   )

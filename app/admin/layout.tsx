@@ -3,6 +3,7 @@ import AdminNavigation from './admin-navigation'
 import './admin.css'
 import './admin-refinement.css'
 import './groups-page.css'
+import './progressive-disclosure.css'
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
