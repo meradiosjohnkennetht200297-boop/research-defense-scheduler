@@ -85,12 +85,11 @@ export default function WorkspaceFormControlsV3() {
     <div className="workspace-form-actions" ref={rootRef}>
       <div className="workspace-save-note">
         <strong>{dirty ? 'Changes have not been saved.' : 'No unsaved changes.'}</strong>
-        <span>Ended published schedules are removed from the public schedule automatically.</span>
       </div>
       <div className="workspace-action-buttons">
-        <Link className="button button-secondary" href={`${pathname}/record`}>Record Options</Link>
-        <button className="button button-secondary" disabled={!dirty || pending} onClick={cancelChanges} type="button">Cancel Changes</button>
+        <button className="button button-secondary workspace-cancel-button" disabled={!dirty || pending} onClick={cancelChanges} type="button">Cancel Changes</button>
         <button className="button workspace-save-button" disabled={pending} type="submit">{pending ? 'Saving…' : 'Save Schedule'}</button>
+        <Link className="workspace-record-options-link" href={`${pathname}/record`}>Record Options →</Link>
       </div>
     </div>
   )
