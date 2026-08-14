@@ -6,10 +6,10 @@ import { usePathname } from 'next/navigation'
 import { logoutAdmin } from './actions'
 
 const navItems = [
-  { label: 'Dashboard', href: '/admin/dashboard' },
-  { label: 'Research Groups', href: '/admin/groups' },
-  { label: 'Defense Schedule', href: '/admin/schedule' },
-  { label: 'Faculty', href: '/admin/faculty' },
+  { label: 'Dashboard', shortLabel: 'Dashboard', href: '/admin/dashboard' },
+  { label: 'Research Groups', shortLabel: 'Groups', href: '/admin/groups' },
+  { label: 'Defense Schedule', shortLabel: 'Schedule', href: '/admin/schedule' },
+  { label: 'Faculty', shortLabel: 'Faculty', href: '/admin/faculty' },
 ]
 
 export default function AdminNavigation({ displayName }: { displayName: string }) {
@@ -19,6 +19,9 @@ export default function AdminNavigation({ displayName }: { displayName: string }
   useEffect(() => {
     const updateHash = () => setHash(window.location.hash)
     updateHash()
+    document.querySelectorAll<HTMLDetailsElement>('.disclosure-card').forEach((details) => {
+      details.open = false
+    })
     window.addEventListener('hashchange', updateHash)
     return () => window.removeEventListener('hashchange', updateHash)
   }, [pathname])
@@ -41,11 +44,13 @@ export default function AdminNavigation({ displayName }: { displayName: string }
           {navItems.map((item) => (
             <Link
               aria-current={isActive(item) ? 'page' : undefined}
+              aria-label={item.label}
               className={isActive(item) ? 'admin-nav-link active' : 'admin-nav-link'}
               href={item.href}
               key={item.href}
             >
-              {item.label}
+              <span className="admin-nav-label">{item.label}</span>
+              <span aria-hidden="true" className="admin-nav-short-label">{item.shortLabel}</span>
             </Link>
           ))}
           <Link className="admin-nav-link admin-public-link" href="/">Public Site ↗</Link>
