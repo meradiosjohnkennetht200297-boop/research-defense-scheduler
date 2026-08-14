@@ -9,7 +9,7 @@ function clean(value: FormDataEntryValue | null) {
 }
 
 function fail(id: string, message: string): never {
-  redirect(`/admin/groups/${id}/record?error=${encodeURIComponent(message)}`)
+  redirect(`/admin/groups/${id}?error=${encodeURIComponent(message)}`)
 }
 
 async function requireAdmin() {
@@ -34,7 +34,7 @@ export async function cancelResearchRecord(formData: FormData) {
   if (groupLookupError) fail(id, 'The research record could not be verified. No change was made.')
   if (!group) fail(id, 'Research group not found.')
   if (group.status === 'completed') fail(id, 'Completed research records are protected and cannot be cancelled.')
-  if (group.status === 'cancelled') redirect(`/admin/groups/${id}/record?cancelled=1`)
+  if (group.status === 'cancelled') redirect(`/admin/groups/${id}`)
   if (!['pending', 'scheduled'].includes(group.status)) fail(id, 'This research record cannot be cancelled.')
 
   const { error: scheduleError } = await supabase.from('defense_schedules').update({ is_published: false }).eq('research_group_id', id)
@@ -42,7 +42,7 @@ export async function cancelResearchRecord(formData: FormData) {
   const { error: groupError } = await supabase.from('research_groups').update({ status: 'cancelled' }).eq('id', id)
   if (groupError) fail(id, 'The schedule was hidden, but the record could not be marked Cancelled. Please try again.')
   refreshRecordViews(id)
-  redirect(`/admin/groups/${id}/record?cancelled=1`)
+  redirect(`/admin/groups/${id}`)
 }
 
 export async function deletePendingResearchRecord(formData: FormData) {
