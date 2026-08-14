@@ -135,8 +135,6 @@ export default function WorkspaceFormControlsV5() {
             <span className={recordStyles.summaryStatus}>{statusLabel}</span>
           </summary>
           <div className={recordStyles.body}>
-            <div className={recordStyles.statusRow}><span>Status</span><strong>{statusLabel}</strong></div>
-
             {dirty ? <p className={recordStyles.state}>Save or discard schedule changes before managing this record.</p> : null}
 
             {canCancel ? (
