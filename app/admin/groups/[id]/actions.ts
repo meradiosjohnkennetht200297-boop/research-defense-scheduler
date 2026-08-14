@@ -45,6 +45,10 @@ async function requireAdmin() {
   return supabase
 }
 
+function groupError(groupId: string, message: string): never {
+  redirect(`/admin/groups/${groupId}?error=${encodeURIComponent(message)}`)
+}
+
 function conflictRedirect(groupId: string, conflicts: ScheduleConflict[]) {
   const details = conflicts.slice(0, 5).map((conflict) => {
     if (conflict.kind === 'venue') {
@@ -53,7 +57,7 @@ function conflictRedirect(groupId: string, conflicts: ScheduleConflict[]) {
     return `${conflict.faculty_name ?? 'A faculty member'} is already assigned to ${conflict.public_code} (${conflict.title}) as ${(conflict.existing_roles ?? []).join(', ') || 'faculty'}`
   })
   const message = `Schedule not saved because of conflict${conflicts.length === 1 ? '' : 's'}: ${details.join('; ')}.`
-  redirect(`/admin/groups/${groupId}?error=${encodeURIComponent(message)}`)
+  groupError(groupId, message)
 }
 
 export async function saveDefenseSchedule(formData: FormData) {
@@ -76,19 +80,37 @@ export async function saveDefenseSchedule(formData: FormData) {
     .slice(0, 4)
 
   if (!groupId || !defenseType || !defenseDate || !startTime || !endTime || !venue || !chairId) {
-    redirect(`/admin/groups/${groupId}?error=${encodeURIComponent('Defense type, date, start time, end time, venue, and panel chair are required.')}`)
+    groupError(groupId, 'Defense type, date, start time, end time, venue, and panel chair are required.')
   }
 
   const allowedDefenseTypes = new Set(['title', 'proposal', 'final'])
   if (!allowedDefenseTypes.has(defenseType)) {
-    redirect(`/admin/groups/${groupId}?error=${encodeURIComponent('Please select a valid defense type.')}`)
+    groupError(groupId, 'Please select a valid defense type.')
   }
 
   if (endTime <= startTime) {
-    redirect(`/admin/groups/${groupId}?error=${encodeURIComponent('End time must be later than start time.')}`)
+    groupError(groupId, 'End time must be later than start time.')
   }
 
   const supabase = await requireAdmin()
+  const { data: group, error: groupLookupError } = await supabase
+    .from('research_groups')
+    .select('id, status')
+    .eq('id', groupId)
+    .maybeSingle()
+
+  if (groupLookupError || !group) {
+    groupError(groupId, 'The research record could not be verified. No schedule change was made.')
+  }
+  if (group.status === 'completed') {
+    groupError(groupId, 'Completed research records are protected. The schedule was not changed.')
+  }
+  if (group.status === 'cancelled') {
+    groupError(groupId, 'This is a legacy Cancelled record and cannot be rescheduled from this workspace.')
+  }
+  if (!['pending', 'scheduled'].includes(group.status)) {
+    groupError(groupId, 'This research record cannot be scheduled.')
+  }
 
   const { data, error } = await supabase.rpc('save_defense_schedule_checked', {
     p_group_id: groupId,
@@ -106,7 +128,7 @@ export async function saveDefenseSchedule(formData: FormData) {
 
   if (error) {
     console.error('Conflict-checked schedule save failed:', error.message)
-    redirect(`/admin/groups/${groupId}?error=${encodeURIComponent('Unable to save the defense schedule. Please try again.')}`)
+    groupError(groupId, 'Unable to save the defense schedule. Please try again.')
   }
 
   const result = (data ?? {}) as SaveResult
@@ -115,13 +137,14 @@ export async function saveDefenseSchedule(formData: FormData) {
     if (Array.isArray(result.conflicts) && result.conflicts.length > 0) {
       conflictRedirect(groupId, result.conflicts)
     }
-
-    redirect(`/admin/groups/${groupId}?error=${encodeURIComponent(result.error || 'Unable to save the defense schedule. Please review the details and try again.')}`)
+    groupError(groupId, result.error || 'Unable to save the defense schedule. Please review the details and try again.')
   }
 
   revalidatePath('/')
+  revalidatePath('/schedule')
   revalidatePath('/admin/dashboard')
   revalidatePath('/admin/groups')
   revalidatePath(`/admin/groups/${groupId}`)
+  revalidatePath('/admin/schedule')
   redirect(`/admin/groups/${groupId}?saved=1`)
 }

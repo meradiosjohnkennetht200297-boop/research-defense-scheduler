@@ -1,1 +1,1 @@
-export { default } from './workspace-form-controls-v6'
+export { default } from './workspace-form-controls-v7'
