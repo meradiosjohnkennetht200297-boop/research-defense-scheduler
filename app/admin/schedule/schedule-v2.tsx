@@ -128,7 +128,7 @@ function ScheduleCard({ schedule, mode }: { schedule: ScheduleRow; mode: 'active
             {mode === 'action' ? 'Reschedule' : 'Edit Schedule'}
           </Link>
         ) : null}
-        <Link className="button button-secondary button-small" href={`/admin/groups/${group.id}`}>Open Research</Link>
+        {mode !== 'active' ? <Link className="button button-secondary button-small" href={`/admin/groups/${group.id}`}>Open Research</Link> : null}
       </div>
     </article>
   )
