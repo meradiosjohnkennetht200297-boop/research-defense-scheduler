@@ -1,0 +1,179 @@
+.dashboard-quick-stats{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  width:min(100%,680px);
+  gap:8px;
+  margin-bottom:16px;
+}
+.dashboard-quick-stat{
+  min-width:0;
+  min-height:64px;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  grid-template-areas:"label value" "hint value";
+  align-items:center;
+  gap:2px 10px;
+  padding:9px 12px;
+  border:1px solid var(--line);
+  border-radius:11px;
+  background:#fff;
+  color:inherit;
+  box-shadow:none;
+  transition:border-color 120ms ease,background 120ms ease;
+}
+.dashboard-quick-stat:hover{border-color:#c7ccd3;background:#fbfcfd}
+.dashboard-quick-stat>span{grid-area:label;color:var(--muted);font-size:.69rem;font-weight:800;line-height:1.2}
+.dashboard-quick-stat>strong{grid-area:value;font-size:1.45rem;line-height:1;letter-spacing:-.04em}
+.dashboard-quick-stat>small{grid-area:hint;color:var(--muted);font-size:.61rem;font-weight:700;line-height:1.25}
+.dashboard-quick-stat.stat-pending{border-top:2px solid #a5abb3}
+.dashboard-quick-stat.stat-scheduled{border-top:2px solid #3f7b58}
+.dashboard-quick-stat.stat-warning{border-color:#e4c79a;border-top:2px solid #b2741f;background:#fffaf2}
+.dashboard-quick-stat.stat-clear{border-top:2px solid #7aa68a;background:#fbfefc}
+
+.dashboard-calendar{
+  margin-top:16px;
+  padding:0;
+  overflow:hidden;
+  border-radius:14px;
+  box-shadow:none;
+}
+.dashboard-calendar-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  padding:14px 16px;
+  border-bottom:1px solid var(--line);
+}
+.dashboard-calendar-header h3{margin:2px 0 3px;font-size:1.05rem;line-height:1.25}
+.dashboard-calendar-header p:last-child{margin:0;color:var(--muted);font-size:.7rem;line-height:1.4}
+.dashboard-calendar-controls{display:flex;align-items:center;gap:5px;flex:0 0 auto}
+.dashboard-calendar-controls a{
+  min-width:34px;
+  min-height:32px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:0 9px;
+  border:1px solid var(--line);
+  border-radius:8px;
+  background:#fff;
+  color:#4e555e;
+  font-size:.7rem;
+  font-weight:800;
+}
+.dashboard-calendar-controls a:hover{border-color:#c5cad1;background:var(--surface-soft)}
+.dashboard-calendar-weekdays{
+  display:grid;
+  grid-template-columns:repeat(7,minmax(0,1fr));
+  border-bottom:1px solid var(--line);
+  background:#fafbfc;
+}
+.dashboard-calendar-weekdays span{
+  padding:7px 8px;
+  color:var(--muted);
+  font-size:.61rem;
+  font-weight:850;
+  letter-spacing:.04em;
+  text-align:center;
+  text-transform:uppercase;
+}
+.dashboard-calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+.dashboard-calendar-day,.dashboard-calendar-empty{
+  min-width:0;
+  min-height:78px;
+  padding:8px;
+  border-right:1px solid var(--line);
+  border-bottom:1px solid var(--line);
+}
+.dashboard-calendar-day:nth-child(7n),.dashboard-calendar-empty:nth-child(7n){border-right:0}
+.dashboard-calendar-day{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:6px;
+  background:#fff;
+  color:inherit;
+}
+.dashboard-calendar-empty{background:#fafafa}
+.dashboard-calendar-day.has-defense{background:#fbfcff}
+.dashboard-calendar-day.has-defense:hover{background:#f3f6fc}
+.dashboard-calendar-date{
+  width:25px;
+  height:25px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:999px;
+  font-size:.72rem;
+  font-weight:800;
+}
+.dashboard-calendar-day.is-today .dashboard-calendar-date{background:var(--accent);color:#fff}
+.dashboard-calendar-count{
+  margin-top:auto;
+  display:inline-flex;
+  align-items:baseline;
+  padding:4px 7px;
+  border-radius:999px;
+  background:#eef3fc;
+  color:#355b9f;
+  font-size:.64rem;
+  font-weight:750;
+  line-height:1;
+}
+.dashboard-calendar-count strong{font-size:.76rem}
+
+.schedule-date-filter{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  margin-bottom:14px;
+  padding:11px 13px;
+  border:1px solid #d7deea;
+  border-radius:11px;
+  background:#f8faff;
+}
+.schedule-date-filter strong,.schedule-date-filter span{display:block}
+.schedule-date-filter strong{font-size:.78rem}
+.schedule-date-filter span{margin-top:2px;color:var(--muted);font-size:.68rem}
+
+@media(min-width:1100px){
+  .admin-dashboard-page .dashboard-heading{margin-bottom:10px}
+  .admin-dashboard-page .confirmation-panel{margin-bottom:0}
+  .admin-dashboard-page .dashboard-calendar{margin-top:16px}
+}
+
+@media(max-width:700px){
+  .dashboard-quick-stats{width:100%;gap:6px;margin-bottom:12px}
+  .dashboard-quick-stat{min-height:56px;padding:8px 9px;gap:1px 6px}
+  .dashboard-quick-stat>span{font-size:.62rem}
+  .dashboard-quick-stat>strong{font-size:1.25rem}
+  .dashboard-quick-stat>small{display:none}
+
+  .dashboard-calendar{margin-top:12px;border-radius:12px}
+  .dashboard-calendar-header{align-items:flex-start;padding:12px;gap:10px}
+  .dashboard-calendar-header h3{font-size:.95rem}
+  .dashboard-calendar-header p:last-child{font-size:.64rem}
+  .dashboard-calendar-controls{gap:4px}
+  .dashboard-calendar-controls a{min-width:30px;min-height:30px;padding:0 7px;font-size:.65rem}
+  .dashboard-calendar-weekdays span{padding:6px 2px;font-size:.54rem}
+  .dashboard-calendar-day,.dashboard-calendar-empty{min-height:52px;padding:5px}
+  .dashboard-calendar-day{gap:2px}
+  .dashboard-calendar-date{width:21px;height:21px;font-size:.64rem}
+  .dashboard-calendar-count{min-width:22px;min-height:20px;justify-content:center;margin-top:auto;padding:3px 5px;font-size:.59rem}
+  .dashboard-calendar-count strong{font-size:.68rem}
+  .dashboard-calendar-count-label{display:none}
+
+  .schedule-date-filter{align-items:stretch;flex-direction:column}
+  .schedule-date-filter .button{width:100%}
+}
+
+@media(max-width:420px){
+  .dashboard-quick-stat{padding:7px 8px}
+  .dashboard-quick-stat>span{font-size:.57rem}
+  .dashboard-quick-stat>strong{font-size:1.12rem}
+  .dashboard-calendar-header{flex-direction:column}
+  .dashboard-calendar-controls{width:100%}
+  .dashboard-calendar-controls a:nth-child(2){flex:1}
+}

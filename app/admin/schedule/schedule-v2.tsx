@@ -49,6 +49,16 @@ function todayKey() {
   }).format(new Date())
 }
 
+function validDateKey(value: string | undefined) {
+  const candidate = String(value ?? '').trim()
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(candidate)) return ''
+  const [year, month, day] = candidate.split('-').map(Number)
+  const parsed = new Date(Date.UTC(year, month - 1, day))
+  return parsed.getUTCFullYear() === year && parsed.getUTCMonth() === month - 1 && parsed.getUTCDate() === day
+    ? candidate
+    : ''
+}
+
 function formatDate(value: string) {
   const [year, month, day] = value.split('-').map(Number)
   return new Intl.DateTimeFormat('en-PH', {
@@ -259,9 +269,10 @@ function ScheduleSection({
 }
 
 export default async function AdminDefenseScheduleV2({ searchParams }: {
-  searchParams: Promise<{ confirmed?: string; error?: string }>
+  searchParams: Promise<{ confirmed?: string; error?: string; date?: string }>
 }) {
   const params = await searchParams
+  const selectedDate = validDateKey(params.date)
   const supabase = await createClient()
   const { data: claimsData } = await supabase.auth.getClaims()
   const userId = claimsData?.claims?.sub
@@ -275,7 +286,7 @@ export default async function AdminDefenseScheduleV2({ searchParams }: {
     .maybeSingle()
   if (!profile) redirect('/admin')
 
-  const { data, error } = await supabase
+  let scheduleQuery = supabase
     .from('defense_schedules')
     .select(`
       id, defense_date, start_time, end_time, venue, is_published, completed_at,
@@ -291,6 +302,9 @@ export default async function AdminDefenseScheduleV2({ searchParams }: {
     .order('defense_date', { ascending: true })
     .order('start_time', { ascending: true })
 
+  if (selectedDate) scheduleQuery = scheduleQuery.eq('defense_date', selectedDate)
+
+  const { data, error } = await scheduleQuery
   const rows = (data ?? []) as ScheduleRow[]
   const now = Date.now()
   const today = todayKey()
@@ -332,6 +346,16 @@ export default async function AdminDefenseScheduleV2({ searchParams }: {
         {params.confirmed ? <div className="alert alert-success">Defense confirmed completed and moved to recent completions.</div> : null}
         {params.error ? <div className="alert alert-error">{params.error}</div> : null}
         {error ? <div className="alert alert-error">Defense schedules are temporarily unavailable. Please try again.</div> : null}
+
+        {selectedDate ? (
+          <div className="schedule-date-filter">
+            <div>
+              <strong>Showing {formatDate(selectedDate)}</strong>
+              <span>Only defenses scheduled on this date are shown.</span>
+            </div>
+            <Link className="button button-secondary button-small" href="/admin/schedule">Clear date filter</Link>
+          </div>
+        ) : null}
 
         <nav aria-label="Schedule summary" className={styles.summary}>
           <a href="#today"><span>Today</span><strong>{todayRows.length}</strong></a>

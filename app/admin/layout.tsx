@@ -5,6 +5,7 @@ import './admin-refinement.css'
 import './groups-page.css'
 import './progressive-disclosure.css'
 import './adaptive-admin.css'
+import './dashboard-calendar.css'
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
