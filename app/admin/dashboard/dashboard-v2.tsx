@@ -3,7 +3,6 @@ import { loadDashboardData } from './dashboard-v2-data'
 import { one, stamp, todayKey } from './dashboard-v2-utils'
 import Summary from './dashboard-v2-summary'
 import ActionRequired from './dashboard-v2-actions'
-import PendingSection from './dashboard-v2-pending'
 import Today from './dashboard-v2-today'
 import NextDefense from './dashboard-v2-next'
 
@@ -42,7 +41,6 @@ export default async function DashboardV2({ searchParams }: { searchParams: Prom
 
         <Summary pending={data.pendingCount} scheduled={data.scheduledCount} actions={actions.length} />
         <ActionRequired rows={actions} />
-        <PendingSection groups={data.pending as any[]} />
         <div className="dashboard-desktop-pair">
           <Today rows={todayRows} />
           <NextDefense row={next} />
