@@ -28,19 +28,6 @@ function hasCapability(person: FacultyRow, capability: Capability | null) {
   return person.can_teach_research
 }
 
-function capabilityLabels(person: FacultyRow) {
-  const labels: string[] = []
-  if (person.can_serve_panel) labels.push('Panel')
-  if (person.can_chair) labels.push('Chair')
-  if (person.can_advise) labels.push('Adviser')
-  if (person.can_teach_research) labels.push('Research Instructor')
-  return labels
-}
-
-function CapabilityMark({ enabled }: { enabled: boolean }) {
-  return <span aria-label={enabled ? 'Enabled' : 'Not enabled'} className={enabled ? 'admin-capability yes' : 'admin-capability'}>{enabled ? 'Yes' : '—'}</span>
-}
-
 function AddFacultyForm() {
   return (
     <details className={styles.addPanel}>
@@ -195,10 +182,6 @@ export default async function FacultyManagementPage({ searchParams }: {
                     <th scope="col">Faculty</th>
                     <th scope="col">Department</th>
                     <th scope="col">Status</th>
-                    <th scope="col">Panel</th>
-                    <th scope="col">Chair</th>
-                    <th scope="col">Adviser</th>
-                    <th scope="col">Instructor</th>
                     <th scope="col"><span className="sr-only">Action</span></th>
                   </tr>
                 </thead>
@@ -208,15 +191,11 @@ export default async function FacultyManagementPage({ searchParams }: {
                       <td>
                         <div className="admin-table-research">
                           <strong>{person.full_name}</strong>
-                          <small>{person.email || 'No email recorded'}</small>
+                          {person.email ? <small>{person.email}</small> : null}
                         </div>
                       </td>
                       <td>{person.department || 'Not set'}</td>
                       <td><span className={person.is_active ? 'status-pill status-published' : 'status-pill'}>{person.is_active ? 'Active' : 'Inactive'}</span></td>
-                      <td><CapabilityMark enabled={person.can_serve_panel} /></td>
-                      <td><CapabilityMark enabled={person.can_chair} /></td>
-                      <td><CapabilityMark enabled={person.can_advise} /></td>
-                      <td><CapabilityMark enabled={person.can_teach_research} /></td>
                       <td className="admin-table-action"><Link className="button button-secondary button-small" href={`/admin/faculty/${person.id}`}>Edit</Link></td>
                     </tr>
                   ))}
@@ -225,24 +204,19 @@ export default async function FacultyManagementPage({ searchParams }: {
             </div>
 
             <div className={`admin-mobile-only ${styles.list}`}>
-              {filtered.map((person) => {
-                const roles = capabilityLabels(person)
-                return (
-                  <article className={`card ${styles.facultyCard}${person.is_active ? '' : ` ${styles.inactive}`}`} key={person.id}>
-                    <div className={styles.cardHead}>
-                      <div className={styles.identity}>
-                        <span className={person.is_active ? 'status-pill status-published' : 'status-pill'}>{person.is_active ? 'Active' : 'Inactive'}</span>
-                        <h3>{person.full_name}</h3>
-                        <p>{person.department || 'Department not set'}</p>
-                      </div>
-                      <Link className="button button-secondary button-small" href={`/admin/faculty/${person.id}`}>Edit</Link>
+              {filtered.map((person) => (
+                <article className={`card ${styles.facultyCard}${person.is_active ? '' : ` ${styles.inactive}`}`} key={person.id}>
+                  <div className={styles.cardHead}>
+                    <div className={styles.identity}>
+                      <span className={person.is_active ? 'status-pill status-published' : 'status-pill'}>{person.is_active ? 'Active' : 'Inactive'}</span>
+                      <h3>{person.full_name}</h3>
+                      <p>{person.department || 'Department not set'}</p>
+                      {person.email ? <p>{person.email}</p> : null}
                     </div>
-                    <div className={styles.badges} aria-label="Faculty capabilities">
-                      {roles.length ? roles.map((role) => <span className={styles.badge} key={role}>{role}</span>) : <span className={styles.noRoles}>No defense roles enabled</span>}
-                    </div>
-                  </article>
-                )
-              })}
+                    <Link className="button button-secondary button-small" href={`/admin/faculty/${person.id}`}>Edit</Link>
+                  </div>
+                </article>
+              ))}
             </div>
           </>
         )}
