@@ -243,3 +243,78 @@
   .workspace-adaptive-grid{display:grid;gap:12px}
   .workspace-research-column{display:grid;gap:12px}
 }
+
+/* Compact desktop dashboard: prioritize scan speed over large card surfaces. */
+@media (min-width:1100px){
+  .admin-dashboard-page{padding-top:20px!important}
+  .admin-dashboard-page .dashboard-heading{margin-bottom:12px}
+  .admin-dashboard-page .dashboard-heading h2{margin-bottom:5px;font-size:clamp(1.7rem,2.4vw,2.05rem)}
+  .admin-dashboard-page .dashboard-intro{max-width:720px;font-size:.79rem;line-height:1.45}
+
+  .admin-dashboard-page .dashboard-stats{
+    grid-template-columns:repeat(3,minmax(185px,220px))!important;
+    justify-content:start;
+    gap:10px;
+    margin-bottom:16px;
+  }
+  .admin-dashboard-page .dashboard-stat-card{
+    min-height:88px;
+    padding:11px 13px;
+    border-radius:12px;
+  }
+  .admin-dashboard-page .dashboard-stat-card>span{font-size:.68rem}
+  .admin-dashboard-page .dashboard-stat-card>strong{margin-top:5px;font-size:1.55rem;letter-spacing:-.04em}
+  .admin-dashboard-page .dashboard-stat-card>small{padding-top:5px;font-size:.63rem;line-height:1.25}
+
+  .admin-dashboard-page .confirmation-panel{
+    margin-bottom:16px;
+    padding:13px 16px;
+    border-radius:13px;
+  }
+  .admin-dashboard-page .confirmation-panel-head{
+    align-items:center;
+    gap:14px;
+    padding-bottom:10px;
+  }
+  .admin-dashboard-page .confirmation-panel-head h3{margin:3px 0 4px;font-size:1rem}
+  .admin-dashboard-page .confirmation-panel-head p:last-child{font-size:.73rem;line-height:1.4}
+  .admin-dashboard-page .confirmation-item{
+    align-items:center;
+    gap:12px;
+    padding:9px 0;
+  }
+  .admin-dashboard-page .confirmation-copy{gap:4px}
+  .admin-dashboard-page .confirmation-copy>strong{font-size:.84rem;line-height:1.3}
+  .admin-dashboard-page .ended-defense-meta{
+    grid-template-columns:repeat(3,minmax(0,max-content));
+    gap:5px 18px;
+    margin-top:0;
+  }
+  .admin-dashboard-page .ended-defense-meta span{gap:1px;font-size:.67rem;line-height:1.3}
+  .admin-dashboard-page .ended-defense-meta b{font-size:.57rem}
+  .admin-dashboard-page .confirmation-actions{gap:6px}
+  .admin-dashboard-page .confirmation-actions .button{min-height:33px;padding:0 10px;font-size:.68rem}
+  .admin-dashboard-page .completion-confirm-form{width:min(300px,70vw);gap:7px;padding:10px}
+  .admin-dashboard-page .completion-confirm-form textarea{min-height:64px}
+
+  .admin-dashboard-page .dashboard-section{margin-top:18px}
+  .admin-dashboard-page .dashboard-desktop-pair{gap:12px}
+  .admin-dashboard-page .dashboard-desktop-pair>.dashboard-section{margin-top:18px}
+  .admin-dashboard-page .dashboard-section-heading{margin-bottom:8px;gap:12px}
+  .admin-dashboard-page .dashboard-section-heading h3{margin-bottom:2px;font-size:1rem}
+  .admin-dashboard-page .dashboard-section-heading p:last-child{font-size:.71rem}
+  .admin-dashboard-page .dashboard-section-heading .button{min-height:33px;padding:0 10px;font-size:.68rem}
+  .admin-dashboard-page .dashboard-panel{padding:11px 13px;border-radius:12px}
+  .admin-dashboard-page .dashboard-defense-row{
+    grid-template-columns:minmax(68px,auto) minmax(0,1fr) auto;
+    gap:9px;
+    padding:8px 0;
+  }
+  .admin-dashboard-page .dashboard-defense-time{font-size:.71rem}
+  .admin-dashboard-page .dashboard-defense-copy{gap:2px}
+  .admin-dashboard-page .dashboard-defense-copy strong{font-size:.76rem;line-height:1.3}
+  .admin-dashboard-page .dashboard-defense-copy small{font-size:.65rem}
+  .admin-dashboard-page .dashboard-mini-empty{min-height:76px;gap:3px}
+  .admin-dashboard-page .dashboard-mini-empty strong{font-size:.78rem}
+  .admin-dashboard-page .dashboard-mini-empty span{font-size:.68rem}
+}
