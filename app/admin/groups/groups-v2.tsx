@@ -4,7 +4,6 @@ import { createClient } from '@/lib/supabase/server'
 import styles from './groups-v2.module.css'
 
 type Params = { q?: string; status?: string; program?: string; defense?: string; page?: string }
-type Schedule = { defense_date: string; start_time: string; venue: string }
 type Group = {
   id: string
   public_code: string
@@ -15,17 +14,12 @@ type Group = {
   status: string
   adviser_id: string | null
   group_members: { full_name: string }[] | null
-  defense_schedules: Schedule[] | Schedule | null
 }
 
 const PAGE_SIZE = 20
 const STATUSES = new Set(['pending', 'scheduled', 'completed', 'cancelled'])
 const PROGRAMS = new Set(['BEED', 'BSED', 'BSA', 'BSAIS', 'BSBA'])
 const DEFENSES = new Set(['title', 'proposal', 'final'])
-
-function one<T>(value: T | T[] | null | undefined) {
-  return !value ? null : Array.isArray(value) ? value[0] ?? null : value
-}
 
 function defenseLabel(value: string | null) {
   return value === 'title' ? 'Title Defense' : value === 'proposal' ? 'Proposal Defense' : value === 'final' ? 'Final Defense' : 'Not recorded'
@@ -37,21 +31,6 @@ function statusLabel(value: string) {
 
 function programLabel(group: Group) {
   return group.program ? `${group.program}${group.major ? ` - ${group.major}` : ''}` : 'Program not recorded'
-}
-
-function dateLabel(value: string) {
-  const [year, month, day] = value.split('-').map(Number)
-  return new Intl.DateTimeFormat('en-PH', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })
-    .format(new Date(Date.UTC(year, month - 1, day)))
-}
-
-function timeLabel(value: string) {
-  const [hourText, minute = '00'] = value.split(':')
-  let hour = Number(hourText)
-  const suffix = hour >= 12 ? 'PM' : 'AM'
-  hour %= 12
-  if (!hour) hour = 12
-  return `${hour}:${minute} ${suffix}`
 }
 
 function href(params: Params, page: number) {
@@ -105,7 +84,7 @@ export default async function ResearchGroupsV2({ searchParams }: { searchParams:
 
   let query = supabase
     .from('research_groups')
-    .select('id,public_code,title,program,major,defense_type,status,adviser_id,group_members(full_name),defense_schedules(defense_date,start_time,venue)', { count: 'exact' })
+    .select('id,public_code,title,program,major,defense_type,status,adviser_id,group_members(full_name)', { count: 'exact' })
     .order('submitted_at', { ascending: false })
 
   if (ids) query = ids.length ? query.in('id', ids) : query.in('id', ['00000000-0000-0000-0000-000000000000'])
@@ -134,55 +113,56 @@ export default async function ResearchGroupsV2({ searchParams }: { searchParams:
     <section className={`section ${styles.page}`}>
       <div className="container">
         <div className={styles.heading}>
-          <div>
-            <p className="eyebrow">Research Groups</p>
-            <h2>Research submissions</h2>
-            <p>Open a submission to review its information and manage its defense.</p>
-          </div>
-          <Link className="button button-secondary button-small" href="/admin/dashboard">← Dashboard</Link>
+          <p className="eyebrow">Research Groups</p>
+          <h2>Research submissions</h2>
+          <p>Open a submission to review its information and manage its defense.</p>
         </div>
 
-        <form className={`card ${styles.toolbar}`} method="get">
-          <div className={styles.searchRow}>
-            <div className="field">
-              <label htmlFor="q">Search</label>
-              <input defaultValue={search} id="q" name="q" placeholder="Research title, code, member, or contact person" type="search" />
+        <form className={styles.toolbar} method="get">
+          <div className={styles.toolbarRow}>
+            <div className={styles.searchRow}>
+              <div className={`field ${styles.searchField}`}>
+                <label htmlFor="q">Search</label>
+                <input defaultValue={search} id="q" name="q" placeholder="Title, code, member, or contact" type="search" />
+              </div>
+              <button className="button button-small" type="submit">Search</button>
             </div>
-            <button className="button" type="submit">Search</button>
+
+            <details className={styles.filters}>
+              <summary>Filters{filters ? ` (${filters})` : ''}</summary>
+              <div className={styles.filterGrid}>
+                <div className="field">
+                  <label htmlFor="status">Status</label>
+                  <select defaultValue={status ?? ''} id="status" name="status">
+                    <option value="">All statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="scheduled">Scheduled</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Legacy Cancelled</option>
+                  </select>
+                </div>
+                <div className="field">
+                  <label htmlFor="program">Program</label>
+                  <select defaultValue={program ?? ''} id="program" name="program">
+                    <option value="">All programs</option>
+                    {['BEED', 'BSED', 'BSA', 'BSAIS', 'BSBA'].map((value) => <option key={value} value={value}>{value}</option>)}
+                  </select>
+                </div>
+                <div className="field">
+                  <label htmlFor="defense">Defense type</label>
+                  <select defaultValue={defense ?? ''} id="defense" name="defense">
+                    <option value="">All defense types</option>
+                    <option value="title">Title Defense</option>
+                    <option value="proposal">Proposal Defense</option>
+                    <option value="final">Final Defense</option>
+                  </select>
+                </div>
+                <button className="button button-secondary button-small" type="submit">Apply</button>
+              </div>
+            </details>
+
+            {(search || filters) ? <Link className={`button button-secondary button-small ${styles.clearLink}`} href="/admin/groups">Clear</Link> : null}
           </div>
-          <details className={styles.filters} open={filters > 0}>
-            <summary>Filters{filters ? ` (${filters})` : ''}</summary>
-            <div className={styles.filterGrid}>
-              <div className="field">
-                <label htmlFor="status">Status</label>
-                <select defaultValue={status ?? ''} id="status" name="status">
-                  <option value="">All statuses</option>
-                  <option value="pending">Pending</option>
-                  <option value="scheduled">Scheduled</option>
-                  <option value="completed">Completed</option>
-                  <option value="cancelled">Legacy Cancelled</option>
-                </select>
-              </div>
-              <div className="field">
-                <label htmlFor="program">Program</label>
-                <select defaultValue={program ?? ''} id="program" name="program">
-                  <option value="">All programs</option>
-                  {['BEED', 'BSED', 'BSA', 'BSAIS', 'BSBA'].map((value) => <option key={value} value={value}>{value}</option>)}
-                </select>
-              </div>
-              <div className="field">
-                <label htmlFor="defense">Defense type</label>
-                <select defaultValue={defense ?? ''} id="defense" name="defense">
-                  <option value="">All defense types</option>
-                  <option value="title">Title Defense</option>
-                  <option value="proposal">Proposal Defense</option>
-                  <option value="final">Final Defense</option>
-                </select>
-              </div>
-              <button className="button button-secondary" type="submit">Apply Filters</button>
-            </div>
-          </details>
-          {(search || filters) ? <Link className="button button-secondary button-small" href="/admin/groups">Clear search and filters</Link> : null}
         </form>
 
         <div className={styles.results}>
@@ -197,7 +177,7 @@ export default async function ResearchGroupsV2({ searchParams }: { searchParams:
         ) : (
           <>
             <div className="admin-desktop-only admin-table-shell">
-              <table className="admin-data-table admin-groups-table">
+              <table className={`admin-data-table ${styles.groupsTable}`}>
                 <thead>
                   <tr>
                     <th scope="col">Research</th>
@@ -205,36 +185,28 @@ export default async function ResearchGroupsV2({ searchParams }: { searchParams:
                     <th scope="col">Defense</th>
                     <th scope="col">Status</th>
                     <th scope="col">Adviser</th>
-                    <th scope="col">Schedule</th>
                     <th scope="col"><span className="sr-only">Action</span></th>
                   </tr>
                 </thead>
                 <tbody>
                   {groups.map((group) => {
-                    const schedule = one(group.defense_schedules)
                     const members = group.group_members?.length ?? 0
                     const adviser = group.adviser_id ? adviserNames.get(group.adviser_id) ?? 'Not found' : 'Not assigned'
                     return (
                       <tr key={group.id}>
                         <td>
-                          <div className="admin-table-research">
+                          <div className={styles.researchCell}>
                             <span className="code">{group.public_code}</span>
-                            <strong>{group.title}</strong>
-                            <small>{members} {members === 1 ? 'member' : 'members'}</small>
+                            <div className={styles.researchLine}>
+                              <strong>{group.title}</strong>
+                              <small>· {members} {members === 1 ? 'member' : 'members'}</small>
+                            </div>
                           </div>
                         </td>
                         <td>{programLabel(group)}</td>
                         <td>{defenseLabel(group.defense_type)}</td>
                         <td><span className={`status-pill status-${group.status}`}>{statusLabel(group.status)}</span></td>
                         <td>{adviser}</td>
-                        <td>
-                          {schedule ? (
-                            <>
-                              <span className="admin-table-nowrap">{dateLabel(schedule.defense_date)} · {timeLabel(schedule.start_time)}</span>
-                              <small className="admin-table-muted">{schedule.venue}</small>
-                            </>
-                          ) : <span className="admin-table-muted">Not scheduled</span>}
-                        </td>
                         <td className="admin-table-action"><Link className="button button-small" href={`/admin/groups/${group.id}`}>Open</Link></td>
                       </tr>
                     )
@@ -245,8 +217,8 @@ export default async function ResearchGroupsV2({ searchParams }: { searchParams:
 
             <div className={`admin-mobile-only ${styles.list}`}>
               {groups.map((group) => {
-                const schedule = one(group.defense_schedules)
                 const members = group.group_members?.length ?? 0
+                const adviser = group.adviser_id ? adviserNames.get(group.adviser_id) ?? 'Not found' : 'Not assigned'
                 return (
                   <article className={`card ${styles.row}`} key={group.id}>
                     <div className={styles.main}>
@@ -259,9 +231,7 @@ export default async function ResearchGroupsV2({ searchParams }: { searchParams:
                         <span>{programLabel(group)}</span>
                         <span>{defenseLabel(group.defense_type)}</span>
                         <span>{members} {members === 1 ? 'member' : 'members'}</span>
-                      </div>
-                      <div className={styles.schedule}>
-                        {schedule ? `Defense: ${dateLabel(schedule.defense_date)} · ${timeLabel(schedule.start_time)} · ${schedule.venue}` : 'Not scheduled'}
+                        <span>Adviser: {adviser}</span>
                       </div>
                     </div>
                     <div className={styles.actions}><Link className="button" href={`/admin/groups/${group.id}`}>Open</Link></div>
