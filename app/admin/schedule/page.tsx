@@ -1,1 +1,1 @@
-export { default } from './schedule-v2'
+export { default } from './schedule-v3-stages'

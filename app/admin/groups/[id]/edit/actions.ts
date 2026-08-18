@@ -1,1 +1,1 @@
-export { saveResearchGroupEdits } from './actions-v2'
+export { saveResearchGroupEdits } from './actions-v3-lifecycle'

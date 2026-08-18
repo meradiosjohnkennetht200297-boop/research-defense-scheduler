@@ -1,1 +1,1 @@
-export { default } from './page-v2-scheduling'
+export { default } from './page-v3-lifecycle'
