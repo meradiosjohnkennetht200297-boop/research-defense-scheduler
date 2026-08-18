@@ -34,8 +34,6 @@ export default async function DashboardV2({ searchParams }: { searchParams: Prom
         <div className="dashboard-heading">
           <div>
             <p className="eyebrow">Admin Dashboard</p>
-            <h2>What needs your attention?</h2>
-            <p className="dashboard-intro">Review pending submissions, today&apos;s defenses, and any defense that needs follow-up.</p>
           </div>
         </div>
 
