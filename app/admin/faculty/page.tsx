@@ -43,8 +43,8 @@ function CapabilityMark({ enabled }: { enabled: boolean }) {
 
 function AddFacultyForm() {
   return (
-    <details className={`card ${styles.addPanel}`}>
-      <summary>+ Add faculty</summary>
+    <details className={styles.addPanel}>
+      <summary>+ Add Faculty</summary>
       <form action={addFacultyDirectory} className={styles.addForm}>
         <div className={styles.editGrid}>
           <div className={`field ${styles.full}`}>
@@ -122,61 +122,60 @@ export default async function FacultyManagementPage({ searchParams }: {
   return (
     <section className={`section ${styles.page}`}>
       <div className="container">
-        <div className={styles.heading}>
-          <div>
-            <p className="eyebrow">Faculty</p>
-            <h2>Faculty directory</h2>
-            <p>Find a faculty member, review their roles, or open the record to make changes.</p>
-          </div>
-        </div>
+        <div className={styles.heading}><p className="eyebrow">Faculty</p></div>
 
         {params.success ? <div className="alert alert-success">{params.success}</div> : null}
         {params.error ? <div className="alert alert-error">{params.error}</div> : null}
         {facultyError ? <div className="alert alert-error">The faculty directory could not be loaded completely.</div> : null}
 
-        <form className={`card ${styles.toolbar}`} method="get">
-          <div className={styles.searchRow}>
-            <div className="field">
-              <label htmlFor="faculty-search">Search</label>
-              <input defaultValue={q} id="faculty-search" name="q" placeholder="Name, email, or department" type="search" />
-            </div>
-            <button className="button" type="submit">Search</button>
-          </div>
-          <details className={styles.filters} open={activeFilterCount > 0}>
-            <summary>Filters{activeFilterCount ? ` (${activeFilterCount})` : ''}</summary>
-            <div className={styles.filterGrid}>
-              <div className="field">
-                <label htmlFor="faculty-status">Status</label>
-                <select defaultValue={status} id="faculty-status" name="status">
-                  <option value="all">All statuses</option>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
+        <div className={styles.controlBar}>
+          <form className={styles.toolbar} method="get">
+            <div className={styles.toolbarRow}>
+              <div className={styles.searchRow}>
+                <div className={`field ${styles.searchField}`}>
+                  <label htmlFor="faculty-search">Search</label>
+                  <input defaultValue={q} id="faculty-search" name="q" placeholder="Name, email, or department" type="search" />
+                </div>
+                <button className="button button-small" type="submit">Search</button>
               </div>
-              <div className="field">
-                <label htmlFor="faculty-capability">Capability</label>
-                <select defaultValue={capability ?? ''} id="faculty-capability" name="capability">
-                  <option value="">All capabilities</option>
-                  <option value="panel">Panel Member</option>
-                  <option value="chair">Chair</option>
-                  <option value="adviser">Research Adviser</option>
-                  <option value="instructor">Research Instructor</option>
-                </select>
-              </div>
-              <div className="field">
-                <label htmlFor="faculty-department">Department</label>
-                <select defaultValue={department} id="faculty-department" name="department">
-                  <option value="">All departments</option>
-                  {departments.map((value) => <option key={value} value={value}>{value}</option>)}
-                </select>
-              </div>
-              <button className="button button-secondary" type="submit">Apply Filters</button>
-            </div>
-          </details>
-          {(q || activeFilterCount) ? <Link className="button button-secondary button-small" href="/admin/faculty">Clear search and filters</Link> : null}
-        </form>
 
-        <AddFacultyForm />
+              <details className={styles.filters}>
+                <summary>Filters{activeFilterCount ? ` (${activeFilterCount})` : ''}</summary>
+                <div className={styles.filterGrid}>
+                  <div className="field">
+                    <label htmlFor="faculty-status">Status</label>
+                    <select defaultValue={status} id="faculty-status" name="status">
+                      <option value="all">All statuses</option>
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                    </select>
+                  </div>
+                  <div className="field">
+                    <label htmlFor="faculty-capability">Capability</label>
+                    <select defaultValue={capability ?? ''} id="faculty-capability" name="capability">
+                      <option value="">All capabilities</option>
+                      <option value="panel">Panel Member</option>
+                      <option value="chair">Chair</option>
+                      <option value="adviser">Research Adviser</option>
+                      <option value="instructor">Research Instructor</option>
+                    </select>
+                  </div>
+                  <div className="field">
+                    <label htmlFor="faculty-department">Department</label>
+                    <select defaultValue={department} id="faculty-department" name="department">
+                      <option value="">All departments</option>
+                      {departments.map((value) => <option key={value} value={value}>{value}</option>)}
+                    </select>
+                  </div>
+                  <button className="button button-secondary button-small" type="submit">Apply</button>
+                </div>
+              </details>
+
+              {(q || activeFilterCount) ? <Link className={`button button-secondary button-small ${styles.clearLink}`} href="/admin/faculty">Clear</Link> : null}
+            </div>
+          </form>
+          <AddFacultyForm />
+        </div>
 
         <div className={styles.results}>
           <span><strong>{filtered.length}</strong> of {faculty.length} faculty shown</span>

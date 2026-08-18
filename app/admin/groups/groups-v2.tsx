@@ -112,11 +112,7 @@ export default async function ResearchGroupsV2({ searchParams }: { searchParams:
   return (
     <section className={`section ${styles.page}`}>
       <div className="container">
-        <div className={styles.heading}>
-          <p className="eyebrow">Research Groups</p>
-          <h2>Research submissions</h2>
-          <p>Open a submission to review its information and manage its defense.</p>
-        </div>
+        <div className={styles.heading}><p className="eyebrow">Research Groups</p></div>
 
         <form className={styles.toolbar} method="get">
           <div className={styles.toolbarRow}>
