@@ -4,6 +4,7 @@ import './admin.css'
 import './admin-refinement.css'
 import './groups-page.css'
 import './progressive-disclosure.css'
+import './adaptive-admin.css'
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -26,7 +27,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <>
       {displayName ? <AdminNavigation displayName={displayName} /> : null}
-      {children}
+      <div className={displayName ? 'admin-content-shell' : undefined}>{children}</div>
     </>
   )
 }

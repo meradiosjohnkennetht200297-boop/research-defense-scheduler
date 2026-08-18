@@ -32,6 +32,8 @@ type ScheduleRow = {
   panel_assignments: PanelAssignment[] | null
 }
 
+type ScheduleMode = 'active' | 'action' | 'completed'
+
 function one<T>(value: T | T[] | null | undefined): T | null {
   if (!value) return null
   return Array.isArray(value) ? value[0] ?? null : value
@@ -85,15 +87,36 @@ function panelNames(schedule: ScheduleRow) {
   }
 }
 
-function ScheduleCard({ schedule, mode }: { schedule: ScheduleRow; mode: 'active' | 'action' | 'completed' }) {
+function visibilityLabel(schedule: ScheduleRow, mode: ScheduleMode) {
+  if (mode === 'completed') return 'Completed'
+  if (mode === 'action') return 'Ended'
+  return schedule.is_published ? 'Published' : 'Private'
+}
+
+function visibilityClass(schedule: ScheduleRow, mode: ScheduleMode) {
+  if (mode === 'completed') return 'status-pill status-completed'
+  if (schedule.is_published && mode === 'active') return 'status-pill status-published'
+  return 'status-pill'
+}
+
+function ScheduleActions({ group, mode }: { group: GroupRow; mode: ScheduleMode }) {
+  return (
+    <>
+      {mode === 'action' ? <CompleteDefenseForm groupId={group.id} returnTo="schedule" /> : null}
+      {mode !== 'completed' ? (
+        <Link className="button button-secondary button-small" href={`/admin/groups/${group.id}${mode === 'action' ? '?reschedule=1' : ''}`}>
+          {mode === 'action' ? 'Reschedule' : 'Edit Schedule'}
+        </Link>
+      ) : null}
+      {mode !== 'active' ? <Link className="button button-secondary button-small" href={`/admin/groups/${group.id}`}>Open Research</Link> : null}
+    </>
+  )
+}
+
+function ScheduleCard({ schedule, mode }: { schedule: ScheduleRow; mode: ScheduleMode }) {
   const group = one(schedule.research_groups)
   if (!group) return null
   const panel = panelNames(schedule)
-  const visibility = mode === 'completed'
-    ? 'Completed'
-    : mode === 'action'
-      ? 'Ended'
-      : schedule.is_published ? 'Published' : 'Private'
 
   return (
     <article className={styles.card}>
@@ -102,7 +125,7 @@ function ScheduleCard({ schedule, mode }: { schedule: ScheduleRow; mode: 'active
           <span className="code">{group.public_code}</span>
           <span className="defense-type-pill">{defenseLabel(group.defense_type)}</span>
         </div>
-        <span className={mode === 'completed' ? 'status-pill status-completed' : schedule.is_published && mode === 'active' ? 'status-pill status-published' : 'status-pill'}>{visibility}</span>
+        <span className={visibilityClass(schedule, mode)}>{visibilityLabel(schedule, mode)}</span>
       </div>
 
       <div className={styles.when}>
@@ -127,16 +150,67 @@ function ScheduleCard({ schedule, mode }: { schedule: ScheduleRow; mode: 'active
         </details>
       ) : null}
 
-      <div className={styles.actions}>
-        {mode === 'action' ? <CompleteDefenseForm groupId={group.id} returnTo="schedule" /> : null}
-        {mode !== 'completed' ? (
-          <Link className="button button-secondary button-small" href={`/admin/groups/${group.id}${mode === 'action' ? '?reschedule=1' : ''}`}>
-            {mode === 'action' ? 'Reschedule' : 'Edit Schedule'}
-          </Link>
-        ) : null}
-        {mode !== 'active' ? <Link className="button button-secondary button-small" href={`/admin/groups/${group.id}`}>Open Research</Link> : null}
-      </div>
+      <div className={styles.actions}><ScheduleActions group={group} mode={mode} /></div>
     </article>
+  )
+}
+
+function DesktopScheduleTable({ rows, mode }: { rows: ScheduleRow[]; mode: ScheduleMode }) {
+  return (
+    <div className="admin-desktop-only admin-table-shell">
+      <table className="admin-data-table admin-schedule-table">
+        <thead>
+          <tr>
+            <th scope="col">Schedule</th>
+            <th scope="col">Research</th>
+            <th scope="col">Program / Defense</th>
+            <th scope="col">Venue</th>
+            <th scope="col">Panel</th>
+            <th scope="col">State</th>
+            <th scope="col"><span className="sr-only">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((schedule) => {
+            const group = one(schedule.research_groups)
+            if (!group) return null
+            const panel = panelNames(schedule)
+            return (
+              <tr key={schedule.id}>
+                <td>
+                  <span className="admin-table-nowrap">{formatDate(schedule.defense_date)}</span>
+                  <small className="admin-table-muted">{formatTime(schedule.start_time)}–{formatTime(schedule.end_time)}</small>
+                </td>
+                <td>
+                  <div className="admin-table-research">
+                    <span className="code">{group.public_code}</span>
+                    <strong>{group.title}</strong>
+                  </div>
+                </td>
+                <td>
+                  <span>{programLabel(group)}</span>
+                  <small className="admin-table-muted">{defenseLabel(group.defense_type)}</small>
+                </td>
+                <td>{schedule.venue}</td>
+                <td>
+                  <strong>{panel.chair}</strong>
+                  {panel.members.length ? (
+                    <details className="admin-table-panel-details">
+                      <summary>{panel.members.length} {panel.members.length === 1 ? 'member' : 'members'}</summary>
+                      <ul>{panel.members.map((name) => <li key={name}>{name}</li>)}</ul>
+                    </details>
+                  ) : <small className="admin-table-muted">No members recorded</small>}
+                </td>
+                <td><span className={visibilityClass(schedule, mode)}>{visibilityLabel(schedule, mode)}</span></td>
+                <td className="admin-table-action">
+                  <div className="admin-schedule-actions"><ScheduleActions group={group} mode={mode} /></div>
+                </td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+    </div>
   )
 }
 
@@ -148,13 +222,18 @@ function ScheduleSection({
   title: string
   description: string
   rows: ScheduleRow[]
-  mode: 'active' | 'action' | 'completed'
+  mode: ScheduleMode
   empty: string
   collapsed?: boolean
 }) {
-  const content = rows.length
-    ? <div className={styles.grid}>{rows.map((row) => <ScheduleCard key={row.id} mode={mode} schedule={row} />)}</div>
-    : <div className={styles.empty}>{empty}</div>
+  const content = rows.length ? (
+    <>
+      <DesktopScheduleTable mode={mode} rows={rows} />
+      <div className={`admin-mobile-only ${styles.grid}`}>
+        {rows.map((row) => <ScheduleCard key={row.id} mode={mode} schedule={row} />)}
+      </div>
+    </>
+  ) : <div className={styles.empty}>{empty}</div>
 
   if (collapsed) {
     return (
@@ -261,7 +340,7 @@ export default async function AdminDefenseScheduleV2({ searchParams }: {
           <a href="#completed"><span>Recent Completed</span><strong>{completed.length}</strong></a>
         </nav>
 
-        <ScheduleSection description="Defenses still in progress or scheduled later today." empty="No active defenses today." eyebrow="Today" id="today" mode="active" rows={todayRows} title="Today&apos;s defenses" />
+        <ScheduleSection description="Defenses still in progress or scheduled later today." empty="No active defenses today." eyebrow="Today" id="today" mode="active" rows={todayRows} title="Today's defenses" />
         <ScheduleSection description="Future defense assignments in chronological order." empty="No upcoming defenses are scheduled." eyebrow="Upcoming" id="upcoming" mode="active" rows={upcoming} title="Upcoming defenses" />
         <ScheduleSection description="These defense times have passed. Confirm the defense if it took place, or reschedule it if it did not." empty="No ended defenses are waiting for confirmation." eyebrow="Action Required" id="action-required" mode="action" rows={actionRequired} title="Awaiting confirmation" />
         <ScheduleSection collapsed description="The most recently confirmed completed defenses." empty="No completed defenses yet." eyebrow="Recent History" id="completed" mode="completed" rows={completed} title="Recently completed" />

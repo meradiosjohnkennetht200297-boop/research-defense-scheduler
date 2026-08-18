@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { logoutAdmin } from './actions'
@@ -14,16 +14,11 @@ const navItems = [
 
 export default function AdminNavigation({ displayName }: { displayName: string }) {
   const pathname = usePathname()
-  const [hash, setHash] = useState('')
 
   useEffect(() => {
-    const updateHash = () => setHash(window.location.hash)
-    updateHash()
     document.querySelectorAll<HTMLDetailsElement>('.disclosure-card').forEach((details) => {
       details.open = false
     })
-    window.addEventListener('hashchange', updateHash)
-    return () => window.removeEventListener('hashchange', updateHash)
   }, [pathname])
 
   function isActive(item: (typeof navItems)[number]) {
@@ -35,6 +30,11 @@ export default function AdminNavigation({ displayName }: { displayName: string }
   return (
     <div className="admin-nav-shell">
       <div className="container admin-nav-wrap">
+        <div className="admin-sidebar-brand" aria-label="Research Defense Admin Workspace">
+          <span className="admin-sidebar-logo">RD</span>
+          <span><strong>Research Defense</strong><small>Admin Workspace</small></span>
+        </div>
+
         <div className="admin-mode-block" aria-label={`Admin mode, signed in as ${displayName}`}>
           <span className="admin-mode-dot" aria-hidden="true" />
           <span><strong>Admin Mode</strong><small>{displayName}</small></span>

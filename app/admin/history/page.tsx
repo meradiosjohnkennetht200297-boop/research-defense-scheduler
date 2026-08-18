@@ -79,6 +79,16 @@ function validDate(value: string | undefined) {
   return /^\d{4}-\d{2}-\d{2}$/.test(candidate) ? candidate : ''
 }
 
+function panelInfo(row: HistoryRow) {
+  const panel = [...(row.panel_assignments ?? [])].sort((a, b) => a.sort_order - b.sort_order)
+  const chairName = one(panel.find((assignment) => assignment.panel_role === 'chair')?.faculty)?.full_name ?? 'Not recorded'
+  const memberNames = panel
+    .filter((assignment) => assignment.panel_role === 'member')
+    .map((assignment) => one(assignment.faculty)?.full_name)
+    .filter(Boolean) as string[]
+  return { chairName, memberNames }
+}
+
 export default async function CompletedDefenseHistory({ searchParams }: {
   searchParams: Promise<Params>
 }) {
@@ -139,8 +149,7 @@ export default async function CompletedDefenseHistory({ searchParams }: {
   const rows = ((historyResult.data ?? []) as HistoryRow[]).filter((row) => {
     if (!search) return true
     const group = one(row.research_groups)
-    const panel = row.panel_assignments ?? []
-    const panelText = panel.map((assignment) => one(assignment.faculty)?.full_name ?? '').join(' ')
+    const panelText = (row.panel_assignments ?? []).map((assignment) => one(assignment.faculty)?.full_name ?? '').join(' ')
     const haystack = `${group?.public_code ?? ''} ${group?.title ?? ''} ${group?.program ?? ''} ${group?.major ?? ''} ${row.venue} ${panelText}`.toLowerCase()
     return haystack.includes(search.toLowerCase())
   })
@@ -226,63 +235,108 @@ export default async function CompletedDefenseHistory({ searchParams }: {
             <p>{search || activeFilters ? 'Adjust the search or filters to see other completed records.' : 'Confirmed defenses will appear here automatically.'}</p>
           </div>
         ) : (
-          <div className={styles.list}>
-            {rows.map((row) => {
-              const group = one(row.research_groups)
-              if (!group) return null
-              const completedBy = one(row.admin_profiles)?.display_name ?? 'Administrator'
-              const programLabel = group.program ? `${group.program}${group.major ? ` - ${group.major}` : ''}` : 'Program not recorded'
-              const panel = [...(row.panel_assignments ?? [])].sort((a, b) => a.sort_order - b.sort_order)
-              const chairName = one(panel.find((assignment) => assignment.panel_role === 'chair')?.faculty)?.full_name ?? 'Not recorded'
-              const memberNames = panel
-                .filter((assignment) => assignment.panel_role === 'member')
-                .map((assignment) => one(assignment.faculty)?.full_name)
-                .filter(Boolean) as string[]
+          <>
+            <div className="admin-desktop-only admin-table-shell">
+              <table className="admin-data-table admin-history-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Defense</th>
+                    <th scope="col">Research</th>
+                    <th scope="col">Program</th>
+                    <th scope="col">Type</th>
+                    <th scope="col">Venue</th>
+                    <th scope="col">Chair</th>
+                    <th scope="col">Confirmed</th>
+                    <th scope="col"><span className="sr-only">Action</span></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((row) => {
+                    const group = one(row.research_groups)
+                    if (!group) return null
+                    const { chairName } = panelInfo(row)
+                    const programLabel = group.program ? `${group.program}${group.major ? ` - ${group.major}` : ''}` : 'Program not recorded'
+                    return (
+                      <tr key={row.id}>
+                        <td>
+                          <span className="admin-table-nowrap">{formatDate(row.defense_date)}</span>
+                          <small className="admin-table-muted">{formatTime(row.start_time)}–{formatTime(row.end_time)}</small>
+                        </td>
+                        <td>
+                          <div className="admin-table-research">
+                            <span className="code">{group.public_code}</span>
+                            <strong>{group.title}</strong>
+                          </div>
+                        </td>
+                        <td>{programLabel}</td>
+                        <td>{defenseTypeLabel(group.defense_type)}</td>
+                        <td>{row.venue}</td>
+                        <td>{chairName}</td>
+                        <td>
+                          <span>{formatCompletedAt(row.completed_at)}</span>
+                          <small className="admin-table-muted">{row.completed_at ? one(row.admin_profiles)?.display_name ?? 'Administrator' : 'Legacy completion'}</small>
+                        </td>
+                        <td className="admin-table-action"><Link className="button button-secondary button-small" href={`/admin/groups/${group.id}`}>View Record</Link></td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
 
-              return (
-                <article className={`card ${styles.card}`} key={row.id}>
-                  <div className={styles.main}>
-                    <div className="schedule-labels">
-                      <span className="code">{group.public_code}</span>
-                      <span className="defense-type-pill">{defenseTypeLabel(group.defense_type)}</span>
-                      <span className="status-pill status-completed">completed</span>
-                    </div>
-                    <h3>{group.title}</h3>
-                    <p>{programLabel}</p>
-                  </div>
+            <div className={`admin-mobile-only ${styles.list}`}>
+              {rows.map((row) => {
+                const group = one(row.research_groups)
+                if (!group) return null
+                const completedBy = one(row.admin_profiles)?.display_name ?? 'Administrator'
+                const programLabel = group.program ? `${group.program}${group.major ? ` - ${group.major}` : ''}` : 'Program not recorded'
+                const { chairName, memberNames } = panelInfo(row)
 
-                  <dl className={styles.details}>
-                    <div><dt>Defense schedule</dt><dd>{formatDate(row.defense_date)} · {formatTime(row.start_time)}–{formatTime(row.end_time)}</dd></div>
-                    <div><dt>Venue</dt><dd>{row.venue}</dd></div>
-                    <div><dt>Panel chair</dt><dd>{chairName}</dd></div>
-                  </dl>
-
-                  <details className={styles.auditDetails}>
-                    <summary>
-                      <span>Completion &amp; panel details</span>
-                      <small>{memberNames.length} {memberNames.length === 1 ? 'panel member' : 'panel members'} · audit available</small>
-                    </summary>
-                    <div className={styles.auditBody}>
-                      <dl className={styles.auditGrid}>
-                        <div><dt>Panel members</dt><dd>{memberNames.length ? memberNames.join(', ') : 'No panel members recorded'}</dd></div>
-                        <div><dt>Confirmed completed</dt><dd>{formatCompletedAt(row.completed_at)}</dd></div>
-                        <div><dt>Confirmed by</dt><dd>{row.completed_at ? completedBy : 'Not recorded for legacy completion'}</dd></div>
-                      </dl>
-                      <div className={styles.note}>
-                        <span>Completion note</span>
-                        <p>{row.completion_note || 'No completion note was added.'}</p>
+                return (
+                  <article className={`card ${styles.card}`} key={row.id}>
+                    <div className={styles.main}>
+                      <div className="schedule-labels">
+                        <span className="code">{group.public_code}</span>
+                        <span className="defense-type-pill">{defenseTypeLabel(group.defense_type)}</span>
+                        <span className="status-pill status-completed">completed</span>
                       </div>
+                      <h3>{group.title}</h3>
+                      <p>{programLabel}</p>
                     </div>
-                  </details>
 
-                  <div className={styles.cardFooter}>
-                    <span className={styles.protected}>Protected record</span>
-                    <Link className="button button-secondary button-small" href={`/admin/groups/${group.id}`}>View Record</Link>
-                  </div>
-                </article>
-              )
-            })}
-          </div>
+                    <dl className={styles.details}>
+                      <div><dt>Defense schedule</dt><dd>{formatDate(row.defense_date)} · {formatTime(row.start_time)}–{formatTime(row.end_time)}</dd></div>
+                      <div><dt>Venue</dt><dd>{row.venue}</dd></div>
+                      <div><dt>Panel chair</dt><dd>{chairName}</dd></div>
+                    </dl>
+
+                    <details className={styles.auditDetails}>
+                      <summary>
+                        <span>Completion &amp; panel details</span>
+                        <small>{memberNames.length} {memberNames.length === 1 ? 'panel member' : 'panel members'} · audit available</small>
+                      </summary>
+                      <div className={styles.auditBody}>
+                        <dl className={styles.auditGrid}>
+                          <div><dt>Panel members</dt><dd>{memberNames.length ? memberNames.join(', ') : 'No panel members recorded'}</dd></div>
+                          <div><dt>Confirmed completed</dt><dd>{formatCompletedAt(row.completed_at)}</dd></div>
+                          <div><dt>Confirmed by</dt><dd>{row.completed_at ? completedBy : 'Not recorded for legacy completion'}</dd></div>
+                        </dl>
+                        <div className={styles.note}>
+                          <span>Completion note</span>
+                          <p>{row.completion_note || 'No completion note was added.'}</p>
+                        </div>
+                      </div>
+                    </details>
+
+                    <div className={styles.cardFooter}>
+                      <span className={styles.protected}>Protected record</span>
+                      <Link className="button button-secondary button-small" href={`/admin/groups/${group.id}`}>View Record</Link>
+                    </div>
+                  </article>
+                )
+              })}
+            </div>
+          </>
         )}
       </div>
     </section>

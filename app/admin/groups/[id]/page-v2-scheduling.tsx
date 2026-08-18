@@ -133,56 +133,62 @@ export default async function ResearchGroupWorkspaceV2({
         ) : null}
         {reschedule && !recordLocked ? <div className="alert alert-warning">Update the date, time, venue, or panel, then save changes.</div> : null}
 
-        <div className="card workspace-research-header">
-          <div className="workspace-research-heading">
-            <div className="workspace-research-labels">
-              <span className="code">{group.public_code}</span>
-              <span className="defense-type-pill">{defenseTypeLabel(currentDefenseType)}</span>
-              <span className={`status-pill status-${group.status}`}>{statusLabel}</span>
-            </div>
-            <h1>{group.title}</h1>
-            <p>{programLabel} · Adviser: {adviserName}</p>
-          </div>
-
-          <div className="workspace-file-actions">
-            {group.research_file_url ? (
-              <>
-                <a className="button workspace-open-file" href={group.research_file_url} rel="noopener noreferrer" target="_blank">Open Research File ↗</a>
-                <CopyResearchLink url={group.research_file_url} />
-              </>
-            ) : (
-              <div className="workspace-file-missing">No research file submitted.</div>
-            )}
-            {recordLocked ? (
-              <small>{group.status === 'completed' ? 'Completed record. Submission editing is disabled.' : 'Legacy Cancelled record. Editing is disabled.'}</small>
-            ) : (
-              <Link className="button button-secondary" href={`/admin/groups/${group.id}/edit`}>Edit Submission</Link>
-            )}
-          </div>
-        </div>
-
-        <div className="workspace-grid workspace-refined-grid">
-          <aside className="workspace-side workspace-info-column">
-            <div className="card info-card workspace-info-card">
-              <div className="workspace-card-heading">
-                <div><h3>Group members</h3><p>{members.length} {members.length === 1 ? 'member' : 'members'}</p></div>
+        <div className="workspace-adaptive-grid">
+          <aside className="workspace-research-column">
+            <div className="card workspace-research-header">
+              <div className="workspace-research-heading">
+                <div className="workspace-research-labels">
+                  <span className="code">{group.public_code}</span>
+                  <span className="defense-type-pill">{defenseTypeLabel(currentDefenseType)}</span>
+                  <span className={`status-pill status-${group.status}`}>{statusLabel}</span>
+                </div>
+                <h1>{group.title}</h1>
+                <p>{programLabel} · Adviser: {adviserName}</p>
               </div>
-              {members.length ? <ol className="member-list workspace-member-list">{members.map((member) => <li key={member.id}>{member.full_name}</li>)}</ol> : <p className="muted-text">No group members recorded.</p>}
+
+              <div className="workspace-file-actions">
+                {group.research_file_url ? (
+                  <>
+                    <a className="button workspace-open-file" href={group.research_file_url} rel="noopener noreferrer" target="_blank">Open Research File ↗</a>
+                    <CopyResearchLink url={group.research_file_url} />
+                  </>
+                ) : (
+                  <div className="workspace-file-missing">No research file submitted.</div>
+                )}
+                {recordLocked ? (
+                  <small>{group.status === 'completed' ? 'Completed record. Submission editing is disabled.' : 'Legacy Cancelled record. Editing is disabled.'}</small>
+                ) : (
+                  <Link className="button button-secondary" href={`/admin/groups/${group.id}/edit`}>Edit Submission</Link>
+                )}
+              </div>
             </div>
 
-            <details className="card info-card workspace-info-card disclosure-card">
-              <summary className="disclosure-summary">
-                <span><strong>Submission details</strong><small>Instructor and contact information</small></span>
-              </summary>
-              <div className="disclosure-body">
-                <dl className="detail-list">
-                  <div><dt>Research instructor</dt><dd>{instructorName}</dd></div>
-                  <div><dt>Contact person</dt><dd>{group.contact_person}</dd></div>
-                  {group.contact_email ? <div><dt>Email</dt><dd>{group.contact_email}</dd></div> : null}
-                  {group.contact_number ? <div><dt>Contact number</dt><dd>{group.contact_number}</dd></div> : null}
-                </dl>
+            <div className="workspace-side workspace-info-column">
+              <div className="card info-card workspace-info-card">
+                <div className="workspace-card-heading">
+                  <div><h3>Group members</h3><p>{members.length} {members.length === 1 ? 'member' : 'members'}</p></div>
+                </div>
+                {members.length ? (
+                  <ol className="member-list workspace-member-list">
+                    {members.map((member) => <li key={member.id}>{member.full_name}</li>)}
+                  </ol>
+                ) : <p className="muted-text">No group members recorded.</p>}
               </div>
-            </details>
+
+              <details className="card info-card workspace-info-card disclosure-card">
+                <summary className="disclosure-summary">
+                  <span><strong>Submission details</strong><small>Instructor and contact information</small></span>
+                </summary>
+                <div className="disclosure-body">
+                  <dl className="detail-list">
+                    <div><dt>Research instructor</dt><dd>{instructorName}</dd></div>
+                    <div><dt>Contact person</dt><dd>{group.contact_person}</dd></div>
+                    {group.contact_email ? <div><dt>Email</dt><dd>{group.contact_email}</dd></div> : null}
+                    {group.contact_number ? <div><dt>Contact number</dt><dd>{group.contact_number}</dd></div> : null}
+                  </dl>
+                </div>
+              </details>
+            </div>
           </aside>
 
           <form action={saveDefenseSchedule} className="card schedule-form workspace-refined-form">
