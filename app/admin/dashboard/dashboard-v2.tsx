@@ -40,8 +40,10 @@ export default async function DashboardV2({ searchParams }: {
         {params.error ? <div className="alert alert-error">{params.error}</div> : null}
 
         <Summary pending={data.pendingCount} scheduled={data.scheduledCount} actions={actions.length} />
-        <ActionRequired rows={actions} />
-        <MonthCalendar month={month} rows={scheduledRows} today={today} />
+        <div className={`dashboard-overview-grid${actions.length ? '' : ' calendar-only'}`}>
+          <ActionRequired rows={actions} />
+          <MonthCalendar month={month} rows={scheduledRows} today={today} />
+        </div>
       </div>
     </section>
   )
