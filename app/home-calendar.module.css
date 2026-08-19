@@ -118,13 +118,28 @@
   transform: translateY(-1px);
 }
 
-.activeDay i,
+.completedDay {
+  background: #f7f8f9;
+  color: #555d66;
+}
+
+.scheduledMark,
 .legendDot {
   width: 5px;
   height: 5px;
   display: block;
   border-radius: 50%;
   background: var(--accent);
+}
+
+.completedMark,
+.legendCheck {
+  display: grid;
+  place-items: center;
+  color: #5d6770;
+  font-size: 0.68rem;
+  font-weight: 900;
+  line-height: 1;
 }
 
 .today::after {
@@ -140,10 +155,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
+  flex-wrap: wrap;
+  gap: 12px;
   margin-top: 13px;
   color: var(--muted);
   font-size: 0.72rem;
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 @media (max-width: 620px) {
