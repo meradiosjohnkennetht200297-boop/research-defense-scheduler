@@ -8,7 +8,7 @@ import { logoutAdmin } from './actions'
 const navItems = [
   { label: 'Dashboard', href: '/admin/dashboard' },
   { label: 'Research Groups', href: '/admin/groups' },
-  { label: 'Schedule', href: '/admin/dashboard#upcoming-defenses', hash: '#upcoming-defenses' },
+  { label: 'Calendar', href: '/admin/dashboard#defense-calendar', hash: '#defense-calendar' },
   { label: 'Faculty', href: '/admin/faculty' },
 ]
 
