@@ -17,7 +17,7 @@ export default function CopyResearchLink({ url }: { url: string }) {
 
   return (
     <button className="button button-secondary button-small" onClick={copyLink} type="button">
-      {copied ? 'Copied ✓' : 'Copy Research Link'}
+      {copied ? 'Copied ✓' : 'Copy Manuscript Link'}
     </button>
   )
 }
