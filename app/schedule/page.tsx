@@ -42,6 +42,10 @@ function programLabel(defense: ResearchDefense) {
   return defense.program_snapshot ? `${defense.program_snapshot}${defense.major_snapshot ? ` - ${defense.major_snapshot}` : ''}` : 'Program not recorded'
 }
 
+function statusLabel(status: string) {
+  return status === 'completed' ? 'Completed' : 'Scheduled'
+}
+
 export default async function PublicSchedule({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const params = await searchParams
   const q = String(params.q ?? '').trim().slice(0, 150)
@@ -57,7 +61,7 @@ export default async function PublicSchedule({ searchParams }: { searchParams: P
     .from('defense_schedules')
     .select(`id, defense_date, start_time, end_time, venue, research_defenses!inner (defense_type, status, title_snapshot, program_snapshot, major_snapshot), panel_assignments (panel_role, sort_order, faculty (full_name))`)
     .eq('is_published', true)
-    .eq('research_defenses.status', 'scheduled')
+    .in('research_defenses.status', ['scheduled', 'completed'])
     .order('defense_date', { ascending: true })
     .order('start_time', { ascending: true })
 
@@ -76,9 +80,9 @@ export default async function PublicSchedule({ searchParams }: { searchParams: P
       <div className="container">
         <div className="minimal-page-heading">
           <div>
-            <p className="eyebrow">Published Schedule</p>
+            <p className="eyebrow">Published Defenses</p>
             <h1>{dayView && date ? `Defenses on ${formatLongDate(date)}` : 'Defense schedule'}</h1>
-            <p>{dayView ? 'Published defenses scheduled for this date.' : 'Published defenses are arranged by date and time.'}</p>
+            <p>{dayView ? 'Published scheduled and completed defenses for this date.' : 'Published defenses remain accessible after completion.'}</p>
           </div>
           <Link className="button button-secondary button-small" href={dayView && date ? `/?month=${date.slice(0, 7)}` : '/'}>{dayView ? '← Calendar' : '← Home'}</Link>
         </div>
@@ -102,7 +106,7 @@ export default async function PublicSchedule({ searchParams }: { searchParams: P
         {error ? (
           <div className="minimal-empty"><h3>Schedule is temporarily unavailable.</h3><p>Please try again later.</p></div>
         ) : schedules.length === 0 ? (
-          <div className="minimal-empty"><h3>{dayView ? 'No published defenses on this date.' : hasFilters ? 'No defenses match these filters.' : 'No published defenses are currently scheduled.'}</h3><p>{dayView ? 'Return to the calendar and choose another marked date.' : hasFilters ? 'Change or clear the filters to see other schedules.' : 'Published defenses will appear here once they are scheduled.'}</p>{dayView && date ? <Link className="text-link" href={`/?month=${date.slice(0, 7)}`}>Back to calendar →</Link> : hasFilters ? <Link className="text-link" href="/schedule">Clear filters →</Link> : null}</div>
+          <div className="minimal-empty"><h3>{dayView ? 'No published defenses on this date.' : hasFilters ? 'No defenses match these filters.' : 'No published defenses yet.'}</h3><p>{dayView ? 'Return to the calendar and choose another marked date.' : hasFilters ? 'Change or clear the filters to see other defenses.' : 'Published scheduled and completed defenses will appear here.'}</p>{dayView && date ? <Link className="text-link" href={`/?month=${date.slice(0, 7)}`}>Back to calendar →</Link> : hasFilters ? <Link className="text-link" href="/schedule">Clear filters →</Link> : null}</div>
         ) : (
           <div className="minimal-schedule-list">
             {schedules.map((schedule) => {
@@ -113,7 +117,7 @@ export default async function PublicSchedule({ searchParams }: { searchParams: P
               const chairName = one(chair?.faculty)?.full_name ?? null
               const members = panel.filter((item) => item.panel_role === 'member').map((item) => one(item.faculty)?.full_name).filter((name): name is string => Boolean(name))
 
-              return <article className="minimal-schedule-card" key={schedule.id}><div className="minimal-schedule-when"><strong>{dayView ? `${formatTime(schedule.start_time)} – ${formatTime(schedule.end_time)}` : formatDate(schedule.defense_date)}</strong>{!dayView ? <span>{formatTime(schedule.start_time)} – {formatTime(schedule.end_time)}</span> : null}</div><div className="minimal-schedule-main"><div className="minimal-defense-labels"><span className={`public-defense-badge type-${stage.defense_type ?? 'general'}`}>{defenseLabel(stage.defense_type)}</span><span className="public-program-badge">{programLabel(stage)}</span></div><h2>{stage.title_snapshot}</h2><p><strong>Venue:</strong> {schedule.venue}</p></div><div className="minimal-panel"><div><span>Panel Chair</span><strong>{chairName ?? 'Not listed'}</strong></div><div><span>Panel Members</span><p>{members.length ? members.join(', ') : 'Not listed'}</p></div></div></article>
+              return <article className={`minimal-schedule-card${stage.status === 'completed' ? ' is-completed-defense' : ''}`} key={schedule.id}><div className="minimal-schedule-when"><strong>{dayView ? `${formatTime(schedule.start_time)} – ${formatTime(schedule.end_time)}` : formatDate(schedule.defense_date)}</strong>{!dayView ? <span>{formatTime(schedule.start_time)} – {formatTime(schedule.end_time)}</span> : null}</div><div className="minimal-schedule-main"><div className="minimal-defense-labels"><span className={`public-status-badge status-${stage.status}`}>{statusLabel(stage.status)}</span><span className={`public-defense-badge type-${stage.defense_type ?? 'general'}`}>{defenseLabel(stage.defense_type)}</span><span className="public-program-badge">{programLabel(stage)}</span></div><h2>{stage.title_snapshot}</h2><p><strong>Venue:</strong> {schedule.venue}</p></div><div className="minimal-panel"><div><span>Panel Chair</span><strong>{chairName ?? 'Not listed'}</strong></div><div><span>Panel Members</span><p>{members.length ? members.join(', ') : 'Not listed'}</p></div></div></article>
             })}
           </div>
         )}
