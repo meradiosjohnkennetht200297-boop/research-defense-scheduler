@@ -7,7 +7,8 @@ type FacultyName = { full_name: string }
 type PanelAssignment = { panel_role: 'chair' | 'member'; sort_order: number; faculty: FacultyName | FacultyName[] | null }
 type ResearchDefense = { defense_type: DefenseType | null; status: string; title_snapshot: string; program_snapshot: string | null; major_snapshot: string | null }
 type ScheduleRow = { id: string; defense_date: string; start_time: string; end_time: string; venue: string; research_defenses: ResearchDefense | ResearchDefense[] | null; panel_assignments: PanelAssignment[] | null }
-type CalendarRow = { defense_date: string }
+type CalendarStage = { status: string }
+type CalendarRow = { defense_date: string; research_defenses: CalendarStage | CalendarStage[] | null }
 type HomeParams = { month?: string }
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -71,6 +72,10 @@ function programLabel(stage: ResearchDefense) {
   return stage.program_snapshot ? `${stage.program_snapshot}${stage.major_snapshot ? ` - ${stage.major_snapshot}` : ''}` : 'Program not recorded'
 }
 
+function statusLabel(status: string) {
+  return status === 'completed' ? 'Completed' : 'Scheduled'
+}
+
 export default async function MinimalHomeV2({ searchParams }: { searchParams: Promise<HomeParams> }) {
   const params = await searchParams
   const today = manilaTodayKey()
@@ -84,13 +89,13 @@ export default async function MinimalHomeV2({ searchParams }: { searchParams: Pr
       .select(`id, defense_date, start_time, end_time, venue, research_defenses!inner (defense_type, status, title_snapshot, program_snapshot, major_snapshot), panel_assignments (panel_role, sort_order, faculty (full_name))`)
       .eq('is_published', true)
       .eq('defense_date', today)
-      .eq('research_defenses.status', 'scheduled')
+      .in('research_defenses.status', ['scheduled', 'completed'])
       .order('start_time', { ascending: true }),
     supabase
       .from('defense_schedules')
       .select('defense_date, research_defenses!inner(status)')
       .eq('is_published', true)
-      .eq('research_defenses.status', 'scheduled')
+      .in('research_defenses.status', ['scheduled', 'completed'])
       .gte('defense_date', firstDate)
       .lte('defense_date', lastDate)
       .order('defense_date', { ascending: true }),
@@ -98,8 +103,16 @@ export default async function MinimalHomeV2({ searchParams }: { searchParams: Pr
 
   const schedules = (todayResult.data ?? []) as ScheduleRow[]
   const calendarRows = (calendarResult.data ?? []) as CalendarRow[]
-  const scheduleCounts = new Map<string, number>()
-  for (const row of calendarRows) scheduleCounts.set(row.defense_date, (scheduleCounts.get(row.defense_date) ?? 0) + 1)
+  const calendarDates = new Map<string, { count: number; hasScheduled: boolean; hasCompleted: boolean }>()
+  for (const row of calendarRows) {
+    const stage = one(row.research_defenses)
+    if (!stage) continue
+    const current = calendarDates.get(row.defense_date) ?? { count: 0, hasScheduled: false, hasCompleted: false }
+    current.count += 1
+    current.hasScheduled ||= stage.status === 'scheduled'
+    current.hasCompleted ||= stage.status === 'completed'
+    calendarDates.set(row.defense_date, current)
+  }
 
   const cells: Array<{ day: number; dateKey: string } | null> = Array.from({ length: startWeekday }, () => null)
   for (let day = 1; day <= days; day += 1) cells.push({ day, dateKey: `${selectedMonth}-${String(day).padStart(2, '0')}` })
@@ -119,7 +132,7 @@ export default async function MinimalHomeV2({ searchParams }: { searchParams: Pr
 
       <section className={styles.calendarSection}>
         <div className={`container ${styles.calendarWrap}`}>
-          <div className={styles.calendarHeading}><div><p className="eyebrow">Defense Calendar</p><h2>Scheduled defenses</h2><p>Select a marked date to view the published defenses scheduled that day.</p></div></div>
+          <div className={styles.calendarHeading}><div><p className="eyebrow">Defense Calendar</p><h2>Defense calendar</h2><p>Select a marked date to view scheduled and completed published defenses.</p></div></div>
           <div className={`card ${styles.calendarCard}`}>
             <div className={styles.monthNav}>
               <Link className={styles.monthButton} href={`/?month=${shiftMonth(selectedMonth, -1)}`} aria-label="Previous month">←</Link>
@@ -130,13 +143,17 @@ export default async function MinimalHomeV2({ searchParams }: { searchParams: Pr
             <div className={styles.calendarGrid}>
               {cells.map((cell, index) => {
                 if (!cell) return <span className={styles.emptyCell} key={`empty-${index}`} />
-                const count = scheduleCounts.get(cell.dateKey) ?? 0
+                const entry = calendarDates.get(cell.dateKey)
                 const isToday = cell.dateKey === today
-                if (count > 0) return <Link className={`${styles.day} ${styles.activeDay}${isToday ? ` ${styles.today}` : ''}`} href={`/schedule?date=${cell.dateKey}`} key={cell.dateKey} title={`${count} published ${count === 1 ? 'defense' : 'defenses'}`} aria-label={`${formatDate(cell.dateKey)}, ${count} published ${count === 1 ? 'defense' : 'defenses'}`}><span>{cell.day}</span><i aria-hidden="true" /></Link>
+                if (entry) {
+                  const completedOnly = entry.hasCompleted && !entry.hasScheduled
+                  const stateText = completedOnly ? 'completed' : entry.hasCompleted ? 'scheduled and completed' : 'scheduled'
+                  return <Link className={`${styles.day} ${styles.activeDay}${completedOnly ? ` ${styles.completedDay}` : ''}${isToday ? ` ${styles.today}` : ''}`} href={`/schedule?date=${cell.dateKey}`} key={cell.dateKey} title={`${entry.count} published ${stateText} ${entry.count === 1 ? 'defense' : 'defenses'}`} aria-label={`${formatDate(cell.dateKey)}, ${entry.count} published ${stateText} ${entry.count === 1 ? 'defense' : 'defenses'}`}><span>{cell.day}</span>{completedOnly ? <b className={styles.completedMark} aria-hidden="true">✓</b> : <i className={styles.scheduledMark} aria-hidden="true" />}</Link>
+                }
                 return <span className={`${styles.day} ${styles.inactiveDay}${isToday ? ` ${styles.today}` : ''}`} key={cell.dateKey}><span>{cell.day}</span></span>
               })}
             </div>
-            <div className={styles.calendarNote}><span className={styles.legendDot} aria-hidden="true" /><span>Marked dates have published defenses.</span></div>
+            <div className={styles.calendarNote}><span className={styles.legendItem}><i className={styles.legendDot} aria-hidden="true" />Scheduled</span><span className={styles.legendItem}><b className={styles.legendCheck} aria-hidden="true">✓</b>Completed</span></div>
           </div>
         </div>
       </section>
@@ -147,7 +164,7 @@ export default async function MinimalHomeV2({ searchParams }: { searchParams: Pr
           {todayResult.error ? (
             <div className="minimal-empty"><h3>Today&apos;s defenses are temporarily unavailable.</h3><p>Please try again later.</p></div>
           ) : schedules.length === 0 ? (
-            <div className="minimal-empty"><h3>No defenses scheduled today.</h3><p>Use the calendar above to select another marked date, or check your Research Code for your group&apos;s status.</p></div>
+            <div className="minimal-empty"><h3>No published defenses today.</h3><p>Use the calendar above to select another marked date, or check your Research Code for your group&apos;s status.</p></div>
           ) : (
             <div className="minimal-today-list">
               {schedules.map((schedule) => {
@@ -157,7 +174,7 @@ export default async function MinimalHomeV2({ searchParams }: { searchParams: Pr
                 const chair = panel.find((item) => item.panel_role === 'chair')
                 const chairName = one(chair?.faculty)?.full_name ?? null
                 const members = panel.filter((item) => item.panel_role === 'member').map((item) => one(item.faculty)?.full_name).filter((name): name is string => Boolean(name))
-                return <article className="minimal-defense-card" key={schedule.id}><div className="minimal-defense-time"><strong>{formatTime(schedule.start_time)}</strong><span>– {formatTime(schedule.end_time)}</span></div><div className="minimal-defense-content"><div className="minimal-defense-labels"><span className={`public-defense-badge type-${stage.defense_type ?? 'general'}`}>{defenseLabel(stage.defense_type)}</span><span className="public-program-badge">{programLabel(stage)}</span></div><h3>{stage.title_snapshot}</h3><p className="minimal-venue">{schedule.venue}</p></div><div className="minimal-panel"><div><span>Panel Chair</span><strong>{chairName ?? 'Not listed'}</strong></div><div><span>Panel Members</span><p>{members.length ? members.join(', ') : 'Not listed'}</p></div></div></article>
+                return <article className={`minimal-defense-card${stage.status === 'completed' ? ' is-completed-defense' : ''}`} key={schedule.id}><div className="minimal-defense-time"><strong>{formatTime(schedule.start_time)}</strong><span>– {formatTime(schedule.end_time)}</span></div><div className="minimal-defense-content"><div className="minimal-defense-labels"><span className={`public-status-badge status-${stage.status}`}>{statusLabel(stage.status)}</span><span className={`public-defense-badge type-${stage.defense_type ?? 'general'}`}>{defenseLabel(stage.defense_type)}</span><span className="public-program-badge">{programLabel(stage)}</span></div><h3>{stage.title_snapshot}</h3><p className="minimal-venue">{schedule.venue}</p></div><div className="minimal-panel"><div><span>Panel Chair</span><strong>{chairName ?? 'Not listed'}</strong></div><div><span>Panel Members</span><p>{members.length ? members.join(', ') : 'Not listed'}</p></div></div></article>
               })}
             </div>
           )}
