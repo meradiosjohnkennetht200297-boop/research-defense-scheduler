@@ -127,7 +127,7 @@ export default function MonthCalendar({ month, rows, today, now, pending }: {
   }
 
   return (
-    <section aria-labelledby="dashboard-calendar-title" className="card dashboard-calendar">
+    <section aria-labelledby="dashboard-calendar-title" className="card dashboard-calendar" id="defense-calendar">
       <div className="dashboard-calendar-header">
         <div>
           <p className="eyebrow">Defense Calendar</p>
