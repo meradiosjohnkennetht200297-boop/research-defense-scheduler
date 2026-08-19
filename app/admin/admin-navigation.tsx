@@ -10,7 +10,6 @@ const navItems = [
   { label: 'Research Groups', shortLabel: 'Groups', href: '/admin/groups' },
   { label: 'Add Existing', shortLabel: 'Import', href: '/admin/groups/import' },
   { label: 'Defense Schedule', shortLabel: 'Schedule', href: '/admin/schedule' },
-  { label: 'Panel Access', shortLabel: 'Panel', href: '/admin/panel-access' },
   { label: 'Faculty', shortLabel: 'Faculty', href: '/admin/faculty' },
 ]
 
