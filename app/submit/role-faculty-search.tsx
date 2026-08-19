@@ -36,7 +36,7 @@ export default function RoleFacultySearch({
 
   return (
     <div className="field faculty-search-field">
-      <label htmlFor={id}>{label} <span className="optional-mark">Optional</span></label>
+      <label htmlFor={id}>{label}</label>
       <input
         autoComplete="off"
         disabled={faculty.length === 0}
