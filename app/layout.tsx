@@ -52,7 +52,6 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
               ) : (
                 <>
                   <Link href="/status">Check Status</Link>
-                  <Link href="/schedule">Browse Schedule</Link>
                   <Link className="button button-small" href="/submit">Submit Research</Link>
                 </>
               )}
