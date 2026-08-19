@@ -1,34 +1,61 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { accessKeyMatches, nextDefenseType, normalizeResearchCode } from '@/lib/research-access'
+import { isValidResearchCode, nextDefenseType, normalizeResearchCode } from '@/lib/research-access'
+import { recordResearchCodeAttempt, researchCodeClientHash, researchCodeRateLimited } from '@/lib/research-code-guard'
 
-type DefenseRow = { id: string; defense_type: string | null; status: string; requested_at: string }
+type DefenseRow = { id: string; defense_type: string | null; status: string; requested_at: string; created_at: string }
+
+const stageRank = (value: string | null) => value === 'final' ? 3 : value === 'proposal' ? 2 : value === 'title' ? 1 : 0
 
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const publicCode = normalizeResearchCode(body.publicCode)
-    const accessKey = String(body.accessKey ?? '').trim()
-    if (!/^RD-[A-Z0-9]{8,}$/i.test(publicCode) || !accessKey) return NextResponse.json({ error: 'Enter your Research ID and Access Key.' }, { status: 400 })
+    const researchCode = normalizeResearchCode(body.researchCode ?? body.publicCode)
+    const admin = createAdminClient()
+    const clientHash = researchCodeClientHash(request.headers)
 
-    const supabase = createAdminClient()
-    const { data: group, error } = await supabase.from('research_groups')
-      .select('id, public_code, title, program, major, research_file_url, contact_person, contact_email, contact_number, instructor_id, adviser_id, access_key_hash')
-      .eq('public_code', publicCode).maybeSingle()
+    if (await researchCodeRateLimited(admin, clientHash)) {
+      return NextResponse.json({ error: 'Too many unsuccessful attempts. Please try again in 15 minutes.' }, { status: 429 })
+    }
+
+    if (!isValidResearchCode(researchCode)) {
+      await recordResearchCodeAttempt(admin, clientHash, researchCode, 'continue', false)
+      return NextResponse.json({ error: 'Enter a valid 4-character Research Code.' }, { status: 400 })
+    }
+
+    const { data: group, error } = await admin
+      .from('research_groups')
+      .select('id, public_code, title, program, major, research_file_url, contact_person, contact_email, contact_number, instructor_id, adviser_id')
+      .eq('public_code', researchCode)
+      .maybeSingle()
+
     if (error) {
       console.error('Research access lookup failed:', error.message)
       return NextResponse.json({ error: 'Unable to verify the research record right now.' }, { status: 500 })
     }
-    if (!group) return NextResponse.json({ error: 'Invalid Research ID or Access Key.' }, { status: 401 })
-    if (!group.access_key_hash) return NextResponse.json({ error: 'This older research record does not have a student Access Key yet. Please ask the administrator to generate one.', needsAccessKeyReset: true }, { status: 409 })
-    if (!accessKeyMatches(group.access_key_hash, accessKey)) return NextResponse.json({ error: 'Invalid Research ID or Access Key.' }, { status: 401 })
+
+    if (!group) {
+      await recordResearchCodeAttempt(admin, clientHash, researchCode, 'continue', false)
+      return NextResponse.json({ error: 'Research Code not found.' }, { status: 404 })
+    }
 
     const [membersResult, defensesResult] = await Promise.all([
-      supabase.from('group_members').select('full_name, sort_order').eq('research_group_id', group.id).order('sort_order'),
-      supabase.from('research_defenses').select('id, defense_type, status, requested_at').eq('research_group_id', group.id).order('requested_at', { ascending: false }),
+      admin.from('group_members').select('full_name, sort_order').eq('research_group_id', group.id).order('sort_order'),
+      admin.from('research_defenses').select('id, defense_type, status, requested_at, created_at').eq('research_group_id', group.id),
     ])
-    if (membersResult.error || defensesResult.error) return NextResponse.json({ error: 'The research record could not be loaded completely.' }, { status: 500 })
-    const defenses = (defensesResult.data ?? []) as DefenseRow[]
+    if (membersResult.error || defensesResult.error) {
+      return NextResponse.json({ error: 'The research record could not be loaded completely.' }, { status: 500 })
+    }
+
+    await recordResearchCodeAttempt(admin, clientHash, researchCode, 'continue', true)
+
+    const defenses = ((defensesResult.data ?? []) as DefenseRow[]).sort((a, b) => {
+      const requested = b.requested_at.localeCompare(a.requested_at)
+      if (requested) return requested
+      const created = b.created_at.localeCompare(a.created_at)
+      if (created) return created
+      return stageRank(b.defense_type) - stageRank(a.defense_type)
+    })
     const latest = defenses[0]
     if (!latest) return NextResponse.json({ error: 'No defense stage is recorded for this research. Please contact the administrator.' }, { status: 409 })
 
@@ -40,13 +67,23 @@ export async function POST(request: Request) {
     else if (latest.status === 'completed' && !nextType) reason = latest.defense_type === 'final' ? 'All three defense stages are already completed.' : 'The previous defense type is not recorded. Please contact the administrator.'
 
     return NextResponse.json({
-      verified: true, canContinue: Boolean(nextType), reason, currentDefenseType: latest.defense_type,
-      currentStatus: latest.status, nextDefenseType: nextType,
+      verified: true,
+      canContinue: Boolean(nextType),
+      reason,
+      currentDefenseType: latest.defense_type,
+      currentStatus: latest.status,
+      nextDefenseType: nextType,
       group: {
-        publicCode: group.public_code, title: group.title, program: group.program ?? '', major: group.major ?? '',
-        researchFileUrl: group.research_file_url ?? '', contactPerson: group.contact_person,
-        contactEmail: group.contact_email ?? '', contactNumber: group.contact_number ?? '',
-        instructorId: group.instructor_id ?? '', adviserId: group.adviser_id ?? '',
+        researchCode: group.public_code,
+        title: group.title,
+        program: group.program ?? '',
+        major: group.major ?? '',
+        researchFileUrl: group.research_file_url ?? '',
+        contactPerson: group.contact_person,
+        contactEmail: group.contact_email ?? '',
+        contactNumber: group.contact_number ?? '',
+        instructorId: group.instructor_id ?? '',
+        adviserId: group.adviser_id ?? '',
         members: (membersResult.data ?? []).map((member) => member.full_name),
       },
     })
