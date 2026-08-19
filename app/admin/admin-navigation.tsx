@@ -8,6 +8,7 @@ import { logoutAdmin } from './actions'
 const navItems = [
   { label: 'Dashboard', shortLabel: 'Dashboard', href: '/admin/dashboard' },
   { label: 'Research Groups', shortLabel: 'Groups', href: '/admin/groups' },
+  { label: 'Add Existing', shortLabel: 'Import', href: '/admin/groups/import' },
   { label: 'Defense Schedule', shortLabel: 'Schedule', href: '/admin/schedule' },
   { label: 'Faculty', shortLabel: 'Faculty', href: '/admin/faculty' },
 ]
@@ -24,6 +25,8 @@ export default function AdminNavigation({ displayName }: { displayName: string }
   function isActive(item: (typeof navItems)[number]) {
     if (item.href === '/admin/schedule') return pathname.startsWith('/admin/schedule') || pathname.startsWith('/admin/history')
     if (item.href === '/admin/dashboard') return pathname === '/admin/dashboard'
+    if (item.href === '/admin/groups/import') return pathname.startsWith('/admin/groups/import')
+    if (item.href === '/admin/groups') return pathname.startsWith('/admin/groups') && !pathname.startsWith('/admin/groups/import')
     return pathname.startsWith(item.href)
   }
 
