@@ -4,9 +4,8 @@ import { createClient } from '@/lib/supabase/server'
 type DefenseType = 'title' | 'proposal' | 'final'
 type FacultyName = { full_name: string }
 type PanelAssignment = { panel_role: 'chair' | 'member'; sort_order: number; faculty: FacultyName | FacultyName[] | null }
-type ResearchGroup = { public_code: string }
 type ResearchDefense = { defense_type: DefenseType | null; status: string; title_snapshot: string; program_snapshot: string | null; major_snapshot: string | null }
-type ScheduleRow = { id: string; defense_date: string; start_time: string; end_time: string; venue: string; research_groups: ResearchGroup | ResearchGroup[] | null; research_defenses: ResearchDefense | ResearchDefense[] | null; panel_assignments: PanelAssignment[] | null }
+type ScheduleRow = { id: string; defense_date: string; start_time: string; end_time: string; venue: string; research_defenses: ResearchDefense | ResearchDefense[] | null; panel_assignments: PanelAssignment[] | null }
 type SearchParams = { q?: string; defense?: string; program?: string; date?: string }
 
 const DEFENSE_TYPES = new Set<DefenseType>(['title', 'proposal', 'final'])
@@ -56,7 +55,7 @@ export default async function PublicSchedule({ searchParams }: { searchParams: P
 
   const { data, error } = await supabase
     .from('defense_schedules')
-    .select(`id, defense_date, start_time, end_time, venue, research_groups!inner (public_code), research_defenses!inner (defense_type, status, title_snapshot, program_snapshot, major_snapshot), panel_assignments (panel_role, sort_order, faculty (full_name))`)
+    .select(`id, defense_date, start_time, end_time, venue, research_defenses!inner (defense_type, status, title_snapshot, program_snapshot, major_snapshot), panel_assignments (panel_role, sort_order, faculty (full_name))`)
     .eq('is_published', true)
     .eq('research_defenses.status', 'scheduled')
     .order('defense_date', { ascending: true })
@@ -81,16 +80,10 @@ export default async function PublicSchedule({ searchParams }: { searchParams: P
             <h1>{dayView && date ? `Defenses on ${formatLongDate(date)}` : 'Defense schedule'}</h1>
             <p>{dayView ? 'Published defenses scheduled for this date.' : 'Published defenses are arranged by date and time.'}</p>
           </div>
-          <Link className="button button-secondary button-small" href={dayView && date ? `/?month=${date.slice(0, 7)}` : '/'}>
-            {dayView ? '← Calendar' : '← Home'}
-          </Link>
+          <Link className="button button-secondary button-small" href={dayView && date ? `/?month=${date.slice(0, 7)}` : '/'}>{dayView ? '← Calendar' : '← Home'}</Link>
         </div>
 
-        {dayView ? (
-          <div className="minimal-schedule-tools">
-            <span className="minimal-result-count">{schedules.length} {schedules.length === 1 ? 'defense' : 'defenses'}</span>
-          </div>
-        ) : (
+        {dayView ? <div className="minimal-schedule-tools"><span className="minimal-result-count">{schedules.length} {schedules.length === 1 ? 'defense' : 'defenses'}</span></div> : (
           <div className="minimal-schedule-tools">
             <details className="minimal-filter" open={hasFilters || undefined}>
               <summary>Filter{hasFilters ? ' · Active' : ''}</summary>
@@ -109,43 +102,18 @@ export default async function PublicSchedule({ searchParams }: { searchParams: P
         {error ? (
           <div className="minimal-empty"><h3>Schedule is temporarily unavailable.</h3><p>Please try again later.</p></div>
         ) : schedules.length === 0 ? (
-          <div className="minimal-empty">
-            <h3>{dayView ? 'No published defenses on this date.' : hasFilters ? 'No defenses match these filters.' : 'No published defenses are currently scheduled.'}</h3>
-            <p>{dayView ? 'Return to the calendar and choose another marked date.' : hasFilters ? 'Change or clear the filters to see other schedules.' : 'Published defenses will appear here once they are scheduled.'}</p>
-            {dayView && date ? <Link className="text-link" href={`/?month=${date.slice(0, 7)}`}>Back to calendar →</Link> : hasFilters ? <Link className="text-link" href="/schedule">Clear filters →</Link> : null}
-          </div>
+          <div className="minimal-empty"><h3>{dayView ? 'No published defenses on this date.' : hasFilters ? 'No defenses match these filters.' : 'No published defenses are currently scheduled.'}</h3><p>{dayView ? 'Return to the calendar and choose another marked date.' : hasFilters ? 'Change or clear the filters to see other schedules.' : 'Published defenses will appear here once they are scheduled.'}</p>{dayView && date ? <Link className="text-link" href={`/?month=${date.slice(0, 7)}`}>Back to calendar →</Link> : hasFilters ? <Link className="text-link" href="/schedule">Clear filters →</Link> : null}</div>
         ) : (
           <div className="minimal-schedule-list">
             {schedules.map((schedule) => {
-              const group = one(schedule.research_groups)
               const stage = one(schedule.research_defenses)
-              if (!group || !stage) return null
+              if (!stage) return null
               const panel = [...(schedule.panel_assignments ?? [])].sort((a, b) => a.sort_order - b.sort_order)
               const chair = panel.find((item) => item.panel_role === 'chair')
               const chairName = one(chair?.faculty)?.full_name ?? null
               const members = panel.filter((item) => item.panel_role === 'member').map((item) => one(item.faculty)?.full_name).filter((name): name is string => Boolean(name))
 
-              return (
-                <article className="minimal-schedule-card" key={schedule.id}>
-                  <div className="minimal-schedule-when">
-                    <strong>{dayView ? `${formatTime(schedule.start_time)} – ${formatTime(schedule.end_time)}` : formatDate(schedule.defense_date)}</strong>
-                    {!dayView ? <span>{formatTime(schedule.start_time)} – {formatTime(schedule.end_time)}</span> : null}
-                  </div>
-                  <div className="minimal-schedule-main">
-                    <div className="minimal-defense-labels">
-                      <span className={`public-defense-badge type-${stage.defense_type ?? 'general'}`}>{defenseLabel(stage.defense_type)}</span>
-                      <span className="public-program-badge">{programLabel(stage)}</span>
-                    </div>
-                    <h2>{stage.title_snapshot}</h2>
-                    <p><strong>Research ID:</strong> {group.public_code}</p>
-                    <p><strong>Venue:</strong> {schedule.venue}</p>
-                  </div>
-                  <div className="minimal-panel">
-                    <div><span>Panel Chair</span><strong>{chairName ?? 'Not listed'}</strong></div>
-                    <div><span>Panel Members</span><p>{members.length ? members.join(', ') : 'Not listed'}</p></div>
-                  </div>
-                </article>
-              )
+              return <article className="minimal-schedule-card" key={schedule.id}><div className="minimal-schedule-when"><strong>{dayView ? `${formatTime(schedule.start_time)} – ${formatTime(schedule.end_time)}` : formatDate(schedule.defense_date)}</strong>{!dayView ? <span>{formatTime(schedule.start_time)} – {formatTime(schedule.end_time)}</span> : null}</div><div className="minimal-schedule-main"><div className="minimal-defense-labels"><span className={`public-defense-badge type-${stage.defense_type ?? 'general'}`}>{defenseLabel(stage.defense_type)}</span><span className="public-program-badge">{programLabel(stage)}</span></div><h2>{stage.title_snapshot}</h2><p><strong>Venue:</strong> {schedule.venue}</p></div><div className="minimal-panel"><div><span>Panel Chair</span><strong>{chairName ?? 'Not listed'}</strong></div><div><span>Panel Members</span><p>{members.length ? members.join(', ') : 'Not listed'}</p></div></div></article>
             })}
           </div>
         )}
