@@ -1,7 +1,15 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto'
 
+export const RESEARCH_CODE_PATTERN = /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{4}$/
+const LEGACY_RESEARCH_CODE_PATTERN = /^RD-[A-Z0-9]{8,}$/
+
 export function normalizeResearchCode(value: unknown) {
   return String(value ?? '').trim().toUpperCase().slice(0, 32)
+}
+
+export function isValidResearchCode(value: unknown) {
+  const normalized = normalizeResearchCode(value)
+  return RESEARCH_CODE_PATTERN.test(normalized) || LEGACY_RESEARCH_CODE_PATTERN.test(normalized)
 }
 
 export function normalizeAccessKey(value: unknown) {
