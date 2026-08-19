@@ -140,6 +140,24 @@
 .schedule-date-filter strong{font-size:.78rem}
 .schedule-date-filter span{margin-top:2px;color:var(--muted);font-size:.68rem}
 
+.dashboard-calendar-legend{display:flex;align-items:center;flex-wrap:wrap;gap:6px 14px;padding:7px 13px;border-bottom:1px solid var(--line);background:#fcfcfd;color:var(--muted);font-size:.6rem;font-weight:750}
+.dashboard-calendar-legend span{display:inline-flex;align-items:center;gap:5px}
+.dashboard-calendar-legend b{color:#555d66;font-size:.62rem}
+.dashboard-calendar-legend i{display:inline-flex;align-items:center;justify-content:center;font-style:normal;font-weight:900}
+.dashboard-calendar-legend .legend-dot{width:6px;height:6px;border-radius:50%;background:#4b75b4}
+.dashboard-calendar-legend .legend-check{color:#47765a}
+.dashboard-calendar-legend .legend-action{width:14px;height:14px;border-radius:50%;background:#fff1d9;color:#9a631a;font-size:.55rem}
+.dashboard-calendar-statuses{display:flex;align-items:center;flex-wrap:wrap;gap:3px;margin-top:auto}
+.calendar-state{display:inline-flex;align-items:center;gap:3px;min-height:18px;padding:0 5px;border-radius:999px;font-size:.55rem;font-weight:900;line-height:1}
+.calendar-state.scheduled{background:#eef3fc;color:#355b9f}
+.calendar-state.scheduled i{width:5px;height:5px;border-radius:50%;background:#4b75b4}
+.calendar-state.completed{background:#eef7f1;color:#39704d}
+.calendar-state.action{background:#fff1d9;color:#9a631a}
+.dashboard-calendar-day.completed-only{background:#fbfdfb}
+.dashboard-calendar-day.completed-only:hover{background:#f4f9f5}
+.dashboard-calendar-day.has-action{box-shadow:inset 0 2px 0 #d59a42;background:#fffaf2}
+.dashboard-calendar-day.has-action:hover{background:#fff6e8}
+
 @media(min-width:1100px){
   .admin-dashboard-page .dashboard-heading{margin-bottom:9px}
   .dashboard-overview-grid{
@@ -192,7 +210,7 @@
 
   .admin-dashboard-page .dashboard-calendar{margin-top:0}
   .admin-dashboard-page .dashboard-calendar-day,
-  .admin-dashboard-page .dashboard-calendar-empty{min-height:54px}
+  .admin-dashboard-page .dashboard-calendar-empty{min-height:58px}
 }
 
 @media(max-width:700px){
@@ -208,6 +226,7 @@
   .dashboard-calendar-header p:last-child{font-size:.64rem}
   .dashboard-calendar-controls{gap:4px}
   .dashboard-calendar-controls a{min-width:30px;min-height:30px;padding:0 7px;font-size:.65rem}
+  .dashboard-calendar-legend{padding:7px 10px;gap:5px 9px;font-size:.56rem}
   .dashboard-calendar-weekdays span{padding:6px 2px;font-size:.54rem}
   .dashboard-calendar-day,.dashboard-calendar-empty{min-height:52px;padding:5px}
   .dashboard-calendar-day{gap:2px}
@@ -215,6 +234,7 @@
   .dashboard-calendar-count{min-width:22px;min-height:20px;justify-content:center;margin-top:auto;padding:3px 5px;font-size:.59rem}
   .dashboard-calendar-count strong{font-size:.68rem}
   .dashboard-calendar-count-label{display:none}
+  .calendar-state{min-width:18px;justify-content:center;padding:0 4px;font-size:.51rem}
 
   .schedule-date-filter{align-items:stretch;flex-direction:column}
   .schedule-date-filter .button{width:100%}
@@ -227,4 +247,6 @@
   .dashboard-calendar-header{flex-direction:column}
   .dashboard-calendar-controls{width:100%}
   .dashboard-calendar-controls a:nth-child(2){flex:1}
+  .dashboard-calendar-legend{justify-content:space-between}
+  .dashboard-calendar-legend b{display:none}
 }
