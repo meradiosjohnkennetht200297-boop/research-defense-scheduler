@@ -1,8 +1,24 @@
 import Link from 'next/link'
 
-type CalendarRow = { defense_date: string }
+type DefenseStatus = 'pending' | 'scheduled' | 'completed' | string
+type DefenseRef = { status: DefenseStatus } | Array<{ status: DefenseStatus }> | null
+type CalendarRow = { defense_date: string; end_time: string; research_defenses: DefenseRef }
+
+type DayCounts = {
+  scheduled: number
+  completed: number
+  action: number
+}
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+function one<T>(value: T | T[] | null | undefined): T | null {
+  return !value ? null : Array.isArray(value) ? value[0] ?? null : value
+}
+
+function stamp(date: string, time: string) {
+  return new Date(`${date}T${String(time).slice(0, 8)}+08:00`).getTime()
+}
 
 function shiftMonth(month: string, offset: number) {
   const [year, monthNumber] = month.split('-').map(Number)
@@ -24,22 +40,44 @@ function dayLabel(dateKey: string) {
   }).format(new Date(Date.UTC(year, month - 1, day)))
 }
 
-export default function MonthCalendar({ month, rows, today }: {
+function describeCounts(counts: DayCounts) {
+  const parts: string[] = []
+  if (counts.scheduled) parts.push(`${counts.scheduled} scheduled`)
+  if (counts.completed) parts.push(`${counts.completed} completed`)
+  if (counts.action) parts.push(`${counts.action} action required`)
+  return parts.join(', ')
+}
+
+export default function MonthCalendar({ month, rows, today, now, pending }: {
   month: string
   rows: CalendarRow[]
   today: string
+  now: number
+  pending: number
 }) {
   const [year, monthNumber] = month.split('-').map(Number)
   const firstWeekday = new Date(Date.UTC(year, monthNumber - 1, 1)).getUTCDay()
   const daysInMonth = new Date(Date.UTC(year, monthNumber, 0)).getUTCDate()
-  const counts = new Map<string, number>()
+  const counts = new Map<string, DayCounts>()
 
   for (const row of rows) {
     if (!row.defense_date.startsWith(`${month}-`)) continue
-    counts.set(row.defense_date, (counts.get(row.defense_date) ?? 0) + 1)
+    const defense = one(row.research_defenses)
+    if (!defense) continue
+    const current = counts.get(row.defense_date) ?? { scheduled: 0, completed: 0, action: 0 }
+    if (defense.status === 'completed') current.completed += 1
+    else if (defense.status === 'scheduled' && stamp(row.defense_date, row.end_time) <= now) current.action += 1
+    else if (defense.status === 'scheduled') current.scheduled += 1
+    else continue
+    counts.set(row.defense_date, current)
   }
 
-  const total = [...counts.values()].reduce((sum, count) => sum + count, 0)
+  const monthTotals = [...counts.values()].reduce((total, item) => ({
+    scheduled: total.scheduled + item.scheduled,
+    completed: total.completed + item.completed,
+    action: total.action + item.action,
+  }), { scheduled: 0, completed: 0, action: 0 })
+  const total = monthTotals.scheduled + monthTotals.completed + monthTotals.action
   const previousMonth = shiftMonth(month, -1)
   const nextMonth = shiftMonth(month, 1)
   const cells = []
@@ -50,16 +88,19 @@ export default function MonthCalendar({ month, rows, today }: {
 
   for (let day = 1; day <= daysInMonth; day += 1) {
     const dateKey = `${month}-${String(day).padStart(2, '0')}`
-    const count = counts.get(dateKey) ?? 0
+    const dayCounts = counts.get(dateKey) ?? { scheduled: 0, completed: 0, action: 0 }
+    const count = dayCounts.scheduled + dayCounts.completed + dayCounts.action
     const isToday = dateKey === today
-    const className = `dashboard-calendar-day${count ? ' has-defense' : ''}${isToday ? ' is-today' : ''}`
+    const className = `dashboard-calendar-day${count ? ' has-defense' : ''}${dayCounts.action ? ' has-action' : ''}${dayCounts.completed && !dayCounts.scheduled && !dayCounts.action ? ' completed-only' : ''}${isToday ? ' is-today' : ''}`
+    const description = describeCounts(dayCounts)
     const content = (
       <>
         <span className="dashboard-calendar-date">{day}</span>
         {count ? (
-          <span className="dashboard-calendar-count">
-            <strong>{count}</strong>
-            <span className="dashboard-calendar-count-label"> {count === 1 ? 'defense' : 'defenses'}</span>
+          <span className="dashboard-calendar-statuses" aria-hidden="true">
+            {dayCounts.scheduled ? <span className="calendar-state scheduled"><i />{dayCounts.scheduled}</span> : null}
+            {dayCounts.completed ? <span className="calendar-state completed">✓{dayCounts.completed}</span> : null}
+            {dayCounts.action ? <span className="calendar-state action">!{dayCounts.action}</span> : null}
           </span>
         ) : null}
       </>
@@ -67,7 +108,7 @@ export default function MonthCalendar({ month, rows, today }: {
 
     cells.push(count ? (
       <Link
-        aria-label={`${dayLabel(dateKey)}, ${count} scheduled ${count === 1 ? 'defense' : 'defenses'}`}
+        aria-label={`${dayLabel(dateKey)}, ${description}`}
         className={className}
         href={`/admin/schedule?date=${dateKey}`}
         key={dateKey}
@@ -89,15 +130,21 @@ export default function MonthCalendar({ month, rows, today }: {
     <section aria-labelledby="dashboard-calendar-title" className="card dashboard-calendar">
       <div className="dashboard-calendar-header">
         <div>
-          <p className="eyebrow">Monthly Schedule</p>
+          <p className="eyebrow">Defense Calendar</p>
           <h3 id="dashboard-calendar-title">{monthLabel(month)}</h3>
-          <p>{total} scheduled {total === 1 ? 'defense' : 'defenses'} this month.</p>
+          <p>{total} dated {total === 1 ? 'defense' : 'defenses'} this month · {pending} pending unscheduled.</p>
         </div>
         <nav aria-label="Calendar month navigation" className="dashboard-calendar-controls">
           <Link aria-label="Previous month" href={`/admin/dashboard?month=${previousMonth}`}>‹</Link>
           <Link href="/admin/dashboard">Today</Link>
           <Link aria-label="Next month" href={`/admin/dashboard?month=${nextMonth}`}>›</Link>
         </nav>
+      </div>
+
+      <div className="dashboard-calendar-legend" aria-label="Calendar status legend">
+        <span><i className="legend-dot" />Scheduled <b>{monthTotals.scheduled}</b></span>
+        <span><i className="legend-check">✓</i>Completed <b>{monthTotals.completed}</b></span>
+        <span><i className="legend-action">!</i>Action Required <b>{monthTotals.action}</b></span>
       </div>
 
       <div className="dashboard-calendar-weekdays" role="row">
