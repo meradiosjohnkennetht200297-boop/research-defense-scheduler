@@ -41,9 +41,12 @@ function SearchField({ id, label, faculty, value, blockedIds, required, onChange
   return (
     <div className="field workspace-panel-search">
       <label htmlFor={id}>{label}{required ? <span className="required-mark"> *</span> : null}</label>
-      <input autoComplete="off" disabled={faculty.length === 0} id={id} list={listId} onChange={(event) => update(event.target.value)} placeholder={faculty.length ? 'Type a faculty name' : 'No eligible faculty available'} value={query} />
+      <div className={value ? 'workspace-panel-input selected' : 'workspace-panel-input'}>
+        <input autoComplete="off" disabled={faculty.length === 0} id={id} list={listId} onChange={(event) => update(event.target.value)} placeholder={faculty.length ? 'Search faculty name' : 'No eligible faculty available'} value={query} />
+        {value ? <span className="workspace-panel-check" aria-label="Selected">✓</span> : null}
+      </div>
       <datalist id={listId}>{faculty.filter((person) => person.id === value || !blockedIds.includes(person.id)).map((person) => <option key={person.id} value={person.full_name} />)}</datalist>
-      {duplicate ? <p className="workspace-picker-feedback invalid">Already assigned to this panel.</p> : value ? <p className="workspace-picker-feedback valid">✓ Selected</p> : query.trim() ? <p className="workspace-picker-feedback invalid">Choose an eligible name from the suggestions.</p> : <p className="workspace-picker-help">Start typing to search eligible faculty.</p>}
+      {duplicate ? <p className="workspace-picker-feedback invalid">Already assigned to this panel.</p> : query.trim() && !value ? <p className="workspace-picker-feedback invalid">Choose an eligible name from the suggestions.</p> : null}
     </div>
   )
 }
@@ -101,36 +104,28 @@ export default function PanelAssignmentPickerV2({ faculty, initialChairId, initi
     })
   }
 
-  const selectedCount = [chairId, ...memberIds].filter(Boolean).length
-
   return (
-    <div className="workspace-panel-picker" ref={rootRef}>
+    <div className="workspace-panel-picker workspace-panel-picker-clean" ref={rootRef}>
       <input name="chairId" type="hidden" value={chairId} />
       {memberIds.filter(Boolean).map((id, index) => <input key={`${id}-${index}`} name="memberIds" type="hidden" value={id} />)}
 
-      {!eligibility && !eligibilityError ? <p className="workspace-picker-help">Loading eligible faculty roles…</p> : null}
-      {eligibilityError ? <p className="workspace-picker-feedback invalid">Eligibility filter could not be loaded. Role eligibility will still be checked when you save.</p> : null}
+      {!eligibility && !eligibilityError ? <p className="workspace-picker-help">Loading eligible faculty…</p> : null}
+      {eligibilityError ? <p className="workspace-picker-feedback invalid">Eligibility filter could not be loaded. Eligibility will still be checked when the schedule is saved.</p> : null}
 
-      <SearchField blockedIds={memberIds.filter(Boolean)} faculty={chairOptions} id="chair-search" label="Panel chair" onChange={setChairId} required value={chairId} />
+      <SearchField blockedIds={memberIds.filter(Boolean)} faculty={chairOptions} id="chair-search" label="Chair" onChange={setChairId} required value={chairId} />
 
-      <div className="workspace-member-pickers">
-        {memberIds.map((id, index) => (
-          <div className="workspace-panel-picker-row" key={index}>
-            <SearchField blockedIds={[chairId, ...memberIds.filter((_, i) => i !== index)].filter(Boolean)} faculty={memberOptions} id={`member-search-${index}`} label={`Panel member ${index + 1}`} onChange={(value) => setMemberIds((current) => current.map((currentId, i) => i === index ? value : currentId))} value={id} />
-            <button aria-label={`Remove panel member ${index + 1}`} className="button button-secondary button-small workspace-remove-panel" onClick={() => removeMember(index)} type="button">Remove</button>
-          </div>
-        ))}
+      <div className="workspace-panel-members-heading">
+        <div><strong>Panel members</strong><small>Add up to four members.</small></div>
+        <button className="button button-secondary button-small workspace-add-panel" disabled={memberIds.length >= 4} onClick={addMember} type="button">+ Add member</button>
       </div>
 
-      <button className="button button-secondary button-small workspace-add-panel" disabled={memberIds.length >= 4} onClick={addMember} type="button">+ Add Panel Member</button>
-
-      <div className="workspace-selected-panel">
-        <span className="workspace-selected-label">Selected panel</span>
-        <div className="workspace-panel-chips">
-          {chairId ? <span className="workspace-panel-chip chair"><strong>Chair</strong>{faculty.find((person) => person.id === chairId)?.full_name}</span> : null}
-          {memberIds.filter(Boolean).map((id, index) => <span className="workspace-panel-chip" key={id}><strong>Member {index + 1}</strong>{faculty.find((person) => person.id === id)?.full_name}</span>)}
-          {selectedCount === 0 ? <span className="workspace-no-panel">No panel selected yet.</span> : null}
-        </div>
+      <div className="workspace-member-pickers workspace-member-pickers-clean">
+        {memberIds.map((id, index) => (
+          <div className="workspace-panel-picker-row workspace-panel-picker-row-clean" key={index}>
+            <SearchField blockedIds={[chairId, ...memberIds.filter((_, i) => i !== index)].filter(Boolean)} faculty={memberOptions} id={`member-search-${index}`} label={`Member ${index + 1}`} onChange={(value) => setMemberIds((current) => current.map((currentId, i) => i === index ? value : currentId))} value={id} />
+            <button aria-label={`Remove panel member ${index + 1}`} className="workspace-remove-panel-clean" onClick={() => removeMember(index)} title="Remove member" type="button">×</button>
+          </div>
+        ))}
       </div>
     </div>
   )
