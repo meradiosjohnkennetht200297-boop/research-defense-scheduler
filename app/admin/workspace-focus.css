@@ -1,7 +1,7 @@
 .admin-sidebar-toggle{display:none}
 
 @media (min-width:1100px){
-  .admin-nav-shell,.admin-content-shell,.admin-sidebar-toggle{transition:transform .18s ease,margin-left .18s ease,left .18s ease}
+  .admin-nav-shell,.admin-content-shell,.admin-sidebar-toggle{transition:transform .18s ease,margin-left .18s ease,left .18s ease,padding-left .18s ease}
   .admin-sidebar-toggle{
     position:fixed;
     z-index:60;
@@ -22,7 +22,7 @@
   }
   .admin-sidebar-toggle:hover{background:#f5f6f8;color:var(--text)}
   html.admin-sidebar-collapsed .admin-nav-shell{transform:translateX(-102%)}
-  html.admin-sidebar-collapsed .admin-content-shell{margin-left:0}
+  html.admin-sidebar-collapsed .admin-content-shell{margin-left:0;padding-left:44px;box-sizing:border-box}
   html.admin-sidebar-collapsed .admin-sidebar-toggle{left:16px}
   html.admin-sidebar-collapsed .admin-content-shell .container{width:calc(100% - 56px)}
   .workspace-focus-page .workspace-focus-layout{width:calc(100% - 56px);max-width:1220px}
