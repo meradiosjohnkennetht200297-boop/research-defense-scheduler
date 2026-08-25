@@ -1,1 +1,1 @@
-export { default } from './page-v3-lifecycle'
+export { default } from './page-v4-focus'
