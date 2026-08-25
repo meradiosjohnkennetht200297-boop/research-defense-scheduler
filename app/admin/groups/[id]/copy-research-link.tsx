@@ -16,8 +16,8 @@ export default function CopyResearchLink({ url }: { url: string }) {
   }
 
   return (
-    <button className="button button-secondary button-small" onClick={copyLink} type="button">
-      {copied ? 'Copied ✓' : 'Copy Manuscript Link'}
+    <button aria-label="Copy manuscript link" className="button button-secondary button-small" onClick={copyLink} title="Copy manuscript link" type="button">
+      {copied ? 'Copied ✓' : 'Copy Link'}
     </button>
   )
 }
