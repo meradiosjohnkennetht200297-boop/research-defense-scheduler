@@ -6,7 +6,6 @@ import PanelAssignmentPicker from './panel-assignment-picker'
 import WorkspaceFormControls from './workspace-form-controls'
 import CopyResearchLink from './copy-research-link'
 import StudentAccessKeyControl from './student-access-key-control'
-import WorkspaceScheduleStepper from './workspace-schedule-stepper'
 
 type FacultyRow = { id: string; full_name: string; is_active: boolean }
 type GroupMemberRow = { id: string; full_name: string; sort_order: number }
@@ -160,46 +159,50 @@ export default async function ResearchGroupWorkspaceV4({ params, searchParams }:
         </article>
 
         {schedulable && currentDefense ? (
-          <form action={saveDefenseSchedule} className="card schedule-form workspace-refined-form workspace-two-step-form">
+          <form action={saveDefenseSchedule} className="card schedule-form workspace-refined-form workspace-compact-desktop-form">
             <input name="groupId" type="hidden" value={group.id} />
             <input name="defenseId" type="hidden" value={currentDefense.id} />
             {currentType ? <input name="defenseType" type="hidden" value={currentType} /> : null}
 
             <div className="workspace-form-header workspace-focus-form-header">
-              <div><p className="eyebrow">Defense Schedule</p><h2>{schedule ? `Update ${defenseTypeLabel(currentType)}` : `Schedule ${defenseTypeLabel(currentType)}`}</h2><p>Set the schedule first, then assign the panel.</p></div>
+              <div><p className="eyebrow">Defense Schedule</p><h2>{schedule ? `Update ${defenseTypeLabel(currentType)}` : `Schedule ${defenseTypeLabel(currentType)}`}</h2><p>Set the schedule and assign the panel in one workspace.</p></div>
               <span className={schedule?.is_published && !hasEnded ? 'status-pill status-published' : 'status-pill'}>{scheduleState}</span>
             </div>
 
-            <WorkspaceScheduleStepper
-              schedule={<>
-                <section className="workspace-form-section workspace-focus-section">
-                  <div className="workspace-section-heading"><div><h3>Schedule</h3><p>Date, time, and venue.</p></div></div>
-                  {!currentType ? <div className="field workspace-legacy-stage"><label htmlFor="defenseTypeDisplay">Defense stage <span className="required-mark">*</span></label><select id="defenseTypeDisplay" name="defenseType" defaultValue=""><option value="">Select legacy defense type</option><option value="title">Title Defense</option><option value="proposal">Proposal Defense</option><option value="final">Final Defense</option></select></div> : null}
-                  <div className="field-grid workspace-focus-schedule-fields">
-                    <div className="field"><label htmlFor="defenseDate">Date <span className="required-mark">*</span></label><input defaultValue={dateValue} id="defenseDate" name="defenseDate" type="date" /></div>
-                    <div className="field"><label htmlFor="startTime">Start time <span className="required-mark">*</span></label><input defaultValue={startValue} id="startTime" name="startTime" type="time" /></div>
-                    <div className="field"><label htmlFor="endTime">End time <span className="required-mark">*</span></label><input defaultValue={endValue} id="endTime" name="endTime" type="time" /></div>
-                    <div className="field full"><label htmlFor="venue">Venue <span className="required-mark">*</span></label><input defaultValue={schedule?.venue ?? ''} id="venue" maxLength={180} name="venue" /></div>
-                  </div>
-                </section>
+            <div className="workspace-desktop-form-grid">
+              <section className="workspace-form-column workspace-schedule-column">
+                <div className="workspace-section-heading"><div><h3>Schedule</h3><p>Date, time, venue, and visibility.</p></div></div>
 
-                <section className="workspace-form-section workspace-focus-options">
+                {!currentType ? <div className="field workspace-legacy-stage"><label htmlFor="defenseTypeDisplay">Defense stage <span className="required-mark">*</span></label><select id="defenseTypeDisplay" name="defenseType" defaultValue=""><option value="">Select legacy defense type</option><option value="title">Title Defense</option><option value="proposal">Proposal Defense</option><option value="final">Final Defense</option></select></div> : null}
+
+                <div className="workspace-compact-schedule-fields">
+                  <div className="field workspace-field-date"><label htmlFor="defenseDate">Date <span className="required-mark">*</span></label><input defaultValue={dateValue} id="defenseDate" name="defenseDate" required type="date" /></div>
+                  <div className="field workspace-field-time"><label htmlFor="startTime">Start time <span className="required-mark">*</span></label><input defaultValue={startValue} id="startTime" name="startTime" required type="time" /></div>
+                  <div className="field workspace-field-time"><label htmlFor="endTime">End time <span className="required-mark">*</span></label><input defaultValue={endValue} id="endTime" name="endTime" required type="time" /></div>
+                </div>
+
+                <div className="field workspace-field-venue"><label htmlFor="venue">Venue <span className="required-mark">*</span></label><input defaultValue={schedule?.venue ?? ''} id="venue" maxLength={180} name="venue" required /></div>
+
+                <div className="workspace-compact-options">
                   <label className="workspace-publish-control workspace-focus-publish" htmlFor="isPublished">
                     <input defaultChecked={schedule?.is_published ?? false} id="isPublished" name="isPublished" type="checkbox" />
-                    <span className="workspace-publish-copy"><strong>Show on public schedule</strong><small>If published, the defense remains on the public calendar after completion.</small></span>
+                    <span className="workspace-publish-copy"><strong>Show on public schedule</strong><small>Published defenses remain visible after completion.</small></span>
                   </label>
+
                   <details className="workspace-inline-disclosure workspace-focus-notes" open={Boolean(schedule?.notes)}>
                     <summary>Administrative notes {schedule?.notes ? '· Added' : '· Optional'}</summary>
                     <div className="workspace-inline-disclosure-body"><div className="field workspace-notes-field"><label htmlFor="notes">Notes</label><textarea defaultValue={schedule?.notes ?? ''} id="notes" maxLength={1000} name="notes" /></div></div>
                   </details>
-                </section>
-              </>}
-              panel={<section className="workspace-form-section workspace-focus-section workspace-panel-step-section">
-                <div className="workspace-section-heading"><div><h3>Assign panel</h3><p>Select the chair and panel members for this defense.</p></div></div>
+                </div>
+              </section>
+
+              <section className="workspace-form-column workspace-panel-column">
+                <div className="workspace-section-heading"><div><h3>Panel</h3><p>Assign the chair and panel members.</p></div></div>
                 <PanelAssignmentPicker faculty={activeFaculty.map(({ id: facultyId, full_name }) => ({ id: facultyId, full_name }))} initialChairId={chairId} initialMemberIds={memberIds} />
-              </section>}
-              controls={<WorkspaceFormControls canDeleteRecord={canDeleteRecord} groupId={group.id} hasSchedule={Boolean(schedule)} locked={false} publicCode={group.public_code} stageStatus={currentDefense.status} />}
-            />
+              </section>
+            </div>
+
+            <WorkspaceFormControls canDeleteRecord={canDeleteRecord} groupId={group.id} hasSchedule={Boolean(schedule)} locked={false} publicCode={group.public_code} stageStatus={currentDefense.status} />
           </form>
         ) : (
           <div className="card workspace-refined-form workspace-no-active-stage">
