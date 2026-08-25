@@ -47,6 +47,7 @@ export default function WorkspaceScheduleStepper({ schedule, panel, controls }: 
   function readSchedule() {
     const currentForm = form()
     return {
+      defenseType: String((currentForm?.elements.namedItem('defenseType') as HTMLInputElement | HTMLSelectElement | null)?.value ?? ''),
       date: String((currentForm?.elements.namedItem('defenseDate') as HTMLInputElement | null)?.value ?? ''),
       start: String((currentForm?.elements.namedItem('startTime') as HTMLInputElement | null)?.value ?? ''),
       end: String((currentForm?.elements.namedItem('endTime') as HTMLInputElement | null)?.value ?? ''),
@@ -56,6 +57,10 @@ export default function WorkspaceScheduleStepper({ schedule, panel, controls }: 
 
   function validateSchedule() {
     const values = readSchedule()
+    if (!values.defenseType) {
+      setScheduleError('Select the defense stage before continuing.')
+      return false
+    }
     if (!values.date || !values.start || !values.end || !values.venue) {
       setScheduleError('Complete the date, time, and venue before continuing to the panel.')
       return false
@@ -65,7 +70,7 @@ export default function WorkspaceScheduleStepper({ schedule, panel, controls }: 
       return false
     }
     setScheduleError('')
-    setSummary(values)
+    setSummary({ date: values.date, start: values.start, end: values.end, venue: values.venue })
     return true
   }
 
