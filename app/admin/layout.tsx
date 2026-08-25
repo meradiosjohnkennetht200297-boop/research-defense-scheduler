@@ -7,6 +7,7 @@ import './progressive-disclosure.css'
 import './adaptive-admin.css'
 import './dashboard-calendar.css'
 import './lifecycle-admin.css'
+import './workspace-focus.css'
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
