@@ -43,20 +43,13 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
               <span className="brand-mark">RO</span>
               <span><strong>RESEARCH OFFICE</strong></span>
             </Link>
-            <nav className="nav-links" aria-label="Main navigation">
-              {isAdmin ? (
-                <>
-                  <Link href="/schedule">Public Schedule</Link>
-                  <Link href="/admin/groups">Research Records</Link>
-                  <Link className="button button-small" href="/admin/dashboard">Admin Workspace</Link>
-                </>
-              ) : (
-                <>
-                  <Link href="/status">Check Status</Link>
-                  <Link className="button button-small" href="/submit">Submit Research</Link>
-                </>
-              )}
-            </nav>
+            {isAdmin ? (
+              <nav className="nav-links" aria-label="Main navigation">
+                <Link href="/schedule">Public Schedule</Link>
+                <Link href="/admin/groups">Research Records</Link>
+                <Link className="button button-small" href="/admin/dashboard">Admin Workspace</Link>
+              </nav>
+            ) : null}
           </div>
         </header>
         <main>{children}</main>
