@@ -11,7 +11,7 @@ import StudentAccessKeyControl from './student-access-key-control'
 type FacultyRow = { id: string; full_name: string; is_active: boolean }
 type GroupMemberRow = { id: string; full_name: string; sort_order: number }
 type PanelAssignmentRow = { faculty_id: string; panel_role: 'chair' | 'member'; sort_order: number }
-type ScheduleRow = { id: string; defense_date: string; start_time: string; end_time: string; venue: string; notes: string | null; is_published: boolean; panel_assignments: PanelAssignmentRow[] | null }
+type ScheduleRow = { id: string; defense_date: string; start_time: string; end_time: string; venue: string | null; notes: string | null; is_published: boolean; panel_assignments: PanelAssignmentRow[] | null }
 type DefenseRow = { id: string; defense_type: 'title' | 'proposal' | 'final' | null; status: string; requested_at: string; completed_at: string | null; defense_schedules: ScheduleRow[] | ScheduleRow | null }
 
 const STAGES = ['title', 'proposal', 'final'] as const
@@ -184,7 +184,7 @@ export default async function ResearchGroupWorkspaceV4({ params, searchParams }:
                   <div className="field workspace-field-time"><label htmlFor="endTime">End time <span className="required-mark">*</span></label><input defaultValue={endValue} id="endTime" name="endTime" required type="time" /></div>
                 </div>
 
-                <div className="field workspace-field-venue"><label htmlFor="venue">Venue <span className="required-mark">*</span></label><input defaultValue={schedule?.venue ?? ''} id="venue" maxLength={180} name="venue" required /></div>
+                <div className="field workspace-field-venue"><label htmlFor="venue">Venue</label><input defaultValue={schedule?.venue ?? ''} id="venue" maxLength={180} name="venue" /></div>
 
                 <div className="workspace-compact-options">
                   <label className="workspace-publish-control workspace-focus-publish" htmlFor="isPublished">
