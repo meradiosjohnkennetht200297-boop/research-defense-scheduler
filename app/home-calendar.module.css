@@ -7,48 +7,48 @@
 
 .dashboardGrid {
   display: grid;
-  grid-template-columns: minmax(320px, 0.78fr) minmax(500px, 1.22fr);
+  grid-template-columns: minmax(330px, 0.78fr) minmax(500px, 1.22fr);
   align-items: center;
-  gap: clamp(28px, 4vw, 54px);
+  gap: clamp(34px, 4.6vw, 64px);
 }
 
 .homeIntro {
   min-width: 0;
+  padding: 8px 0;
 }
 
-.homeIntro h1 {
+.introActions {
   max-width: 500px;
-  margin: 5px 0 12px;
-  font-size: clamp(2.35rem, 4vw, 3.35rem);
-  line-height: 0.98;
-  letter-spacing: -0.05em;
 }
 
 .homeLead {
-  max-width: 490px;
+  max-width: 460px;
   margin: 0;
-  color: var(--muted);
-  font-size: 0.94rem;
-  line-height: 1.55;
+  color: var(--text);
+  font-size: clamp(1.2rem, 1.65vw, 1.48rem);
+  font-weight: 800;
+  line-height: 1.35;
+  letter-spacing: -0.025em;
 }
 
 .primaryActions {
   display: flex;
   flex-wrap: wrap;
-  gap: 9px;
-  margin-top: 22px;
+  gap: 10px;
+  margin-top: 18px;
 }
 
 .primaryActions :global(.button) {
-  min-height: 42px;
-  padding: 0 15px;
-  border-radius: 10px;
+  min-width: 142px;
+  min-height: 43px;
+  padding: 0 17px;
+  border-radius: 11px;
   font-size: 0.82rem;
 }
 
 .nextDefenseBlock {
   max-width: 500px;
-  margin-top: 28px;
+  margin-top: 30px;
   padding-top: 18px;
   border-top: 1px solid var(--line);
 }
@@ -58,40 +58,45 @@
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-  margin-bottom: 9px;
+  margin-bottom: 10px;
 }
 
 .nextDefenseHeading > span {
-  color: var(--muted);
-  font-size: 0.69rem;
+  color: #59616b;
+  font-size: 0.7rem;
   font-weight: 900;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.085em;
   text-transform: uppercase;
 }
 
 .nextDefenseHeading a {
-  color: #505761;
-  font-size: 0.75rem;
-  font-weight: 800;
+  color: #3f4650;
+  font-size: 0.76rem;
+  font-weight: 850;
+}
+
+.nextDefenseHeading a:hover {
+  color: var(--text);
 }
 
 .nextDefenseCard,
 .nextDefenseEmpty {
   display: block;
-  border: 1px solid var(--line);
-  border-radius: 14px;
+  border: 1px solid #dde1e6;
+  border-radius: 16px;
   background: var(--surface);
 }
 
 .nextDefenseCard {
-  padding: 15px 16px;
+  padding: 16px 17px;
+  box-shadow: 0 7px 20px rgba(17, 24, 39, 0.035);
   transition: border-color 120ms ease, transform 120ms ease, box-shadow 120ms ease;
 }
 
 .nextDefenseCard:hover {
-  border-color: #c8cdd4;
-  transform: translateY(-1px);
-  box-shadow: 0 10px 24px rgba(17, 24, 39, 0.05);
+  border-color: #c4cad2;
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(17, 24, 39, 0.07);
 }
 
 .nextDefenseWhen {
@@ -103,7 +108,7 @@
 }
 
 .nextDefenseWhen strong {
-  font-size: 0.84rem;
+  font-size: 0.85rem;
 }
 
 .nextDefenseWhen span {
@@ -123,9 +128,9 @@
   display: -webkit-box;
   overflow: hidden;
   margin: 0 0 6px;
-  font-size: 0.93rem;
-  line-height: 1.35;
-  letter-spacing: -0.01em;
+  font-size: 0.98rem;
+  line-height: 1.34;
+  letter-spacing: -0.015em;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
@@ -158,9 +163,11 @@
 
 .calendarPanel {
   min-width: 0;
-  padding: clamp(16px, 2vw, 22px);
-  border-radius: 18px;
-  box-shadow: 0 14px 34px rgba(17, 24, 39, 0.05);
+  padding: clamp(18px, 2.1vw, 24px);
+  border: 1px solid #dfe3e8;
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow: 0 18px 42px rgba(17, 24, 39, 0.065);
 }
 
 .calendarTopbar {
@@ -168,18 +175,22 @@
   align-items: center;
   justify-content: space-between;
   gap: 18px;
-  margin-bottom: 12px;
+  margin-bottom: 9px;
+  padding-bottom: 13px;
+  border-bottom: 1px solid #eef0f2;
 }
 
 .calendarTopbar :global(.eyebrow) {
   margin-bottom: 4px;
+  color: #56606b;
   font-size: 0.68rem;
+  letter-spacing: 0.085em;
 }
 
 .calendarTopbar h2 {
   margin: 0;
-  font-size: 1.18rem;
-  letter-spacing: -0.025em;
+  font-size: 1.22rem;
+  letter-spacing: -0.03em;
 }
 
 .monthControls {
@@ -188,20 +199,23 @@
 }
 
 .monthButton {
-  width: 34px;
-  height: 34px;
+  width: 35px;
+  height: 35px;
   display: grid;
   place-items: center;
-  border: 1px solid var(--line);
-  border-radius: 9px;
+  border: 1px solid #dfe3e8;
+  border-radius: 10px;
   background: var(--surface);
   color: var(--text);
   font-size: 0.9rem;
   font-weight: 850;
+  transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
 }
 
 .monthButton:hover {
+  border-color: #c8ced6;
   background: var(--surface-soft);
+  transform: translateY(-1px);
 }
 
 .weekdays,
@@ -215,13 +229,13 @@
 }
 
 .weekdays span {
-  padding: 4px 0;
-  color: var(--muted);
+  padding: 5px 0;
+  color: #606975;
   font-size: 0.6rem;
-  font-weight: 850;
+  font-weight: 900;
   text-align: center;
   text-transform: uppercase;
-  letter-spacing: 0.045em;
+  letter-spacing: 0.05em;
 }
 
 .calendarGrid {
@@ -246,25 +260,26 @@
 }
 
 .inactiveDay {
-  color: #737a83;
+  color: #707883;
 }
 
 .activeDay {
-  border: 1px solid #d7dce2;
-  background: var(--surface);
+  border: 1px solid #d4d9df;
+  background: #fafbfc;
   color: var(--text);
   font-weight: 900;
-  transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
+  transition: background 120ms ease, border-color 120ms ease, transform 120ms ease, box-shadow 120ms ease;
 }
 
 .activeDay:hover {
-  border-color: #b9c0c8;
-  background: var(--surface-soft);
+  border-color: #b8c0c9;
+  background: var(--surface);
   transform: translateY(-1px);
+  box-shadow: 0 5px 12px rgba(17, 24, 39, 0.06);
 }
 
 .completedDay {
-  background: #f7f8f9;
+  background: #f5f7f8;
   color: #555d66;
 }
 
@@ -291,7 +306,7 @@
   content: '';
   position: absolute;
   inset: 3px;
-  border: 1px solid #cdd2d8;
+  border: 1px solid #bfc6ce;
   border-radius: 8px;
   pointer-events: none;
 }
@@ -301,7 +316,9 @@
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-  margin-top: 11px;
+  margin-top: 12px;
+  padding-top: 11px;
+  border-top: 1px solid #f0f1f3;
   color: var(--muted);
   font-size: 0.68rem;
 }
@@ -336,7 +353,7 @@
     gap: 28px;
   }
 
-  .homeIntro h1,
+  .introActions,
   .homeLead,
   .nextDefenseBlock {
     max-width: none;
@@ -361,17 +378,22 @@
     width: min(100% - 22px, 1120px);
   }
 
-  .homeIntro h1 {
-    font-size: 2.35rem;
+  .homeLead {
+    font-size: 1.18rem;
   }
 
   .primaryActions {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .primaryActions :global(.button) {
     width: 100%;
+    min-width: 0;
+  }
+
+  .nextDefenseBlock {
+    margin-top: 24px;
   }
 
   .nextDefenseWhen {
@@ -382,7 +404,7 @@
 
   .calendarPanel {
     padding: 14px;
-    border-radius: 14px;
+    border-radius: 15px;
   }
 
   .emptyCell,
@@ -398,6 +420,10 @@
 }
 
 @media (max-width: 390px) {
+  .primaryActions {
+    grid-template-columns: 1fr;
+  }
+
   .calendarGrid {
     gap: 2px;
   }
