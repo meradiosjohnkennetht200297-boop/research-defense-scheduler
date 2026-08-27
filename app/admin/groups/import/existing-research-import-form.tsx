@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { FormEvent, useMemo, useState } from 'react'
+import { RESEARCH_DESIGN_OPTIONS } from '@/lib/research-design'
 import styles from './import.module.css'
 
 type Faculty = {
@@ -41,6 +42,7 @@ function conflictText(value: unknown) {
 
 export default function ExistingResearchImportForm({ faculty }: { faculty: Faculty[] }) {
   const [program, setProgram] = useState('')
+  const [researchDesign, setResearchDesign] = useState('')
   const [stage, setStage] = useState<Stage>('title')
   const [hasSchedule, setHasSchedule] = useState(false)
   const [members, setMembers] = useState([''])
@@ -66,10 +68,13 @@ export default function ExistingResearchImportForm({ faculty }: { faculty: Facul
     const cleanMembers = members.map((name) => name.trim()).filter(Boolean)
     const cleanPanelMembers = panelMembers.filter(Boolean)
     const chairId = String(form.get('chairId') ?? '')
+    const researchDesignOther = String(form.get('researchDesignOther') ?? '').trim()
 
     if (!String(form.get('title') ?? '').trim()) return setError('Enter the research title.')
     if (!program) return setError('Select the program.')
     if (majors.length && !String(form.get('major') ?? '')) return setError('Select the major.')
+    if (!researchDesign) return setError('Select the research design.')
+    if (researchDesign === 'other' && !researchDesignOther) return setError('Specify the research design.')
     if (!cleanMembers.length) return setError('Enter at least one group member.')
     if (!String(form.get('contactPerson') ?? '').trim()) return setError('Enter the contact person.')
 
@@ -93,6 +98,8 @@ export default function ExistingResearchImportForm({ faculty }: { faculty: Facul
           title: String(form.get('title') ?? ''),
           program,
           major: String(form.get('major') ?? ''),
+          researchDesign,
+          researchDesignOther: researchDesign === 'other' ? researchDesignOther : '',
           currentStage: stage,
           members: cleanMembers,
           instructorId: String(form.get('instructorId') ?? ''),
@@ -167,6 +174,8 @@ export default function ExistingResearchImportForm({ faculty }: { faculty: Facul
           <div className="field full"><label htmlFor="import-title">Research title <span className="required-mark">*</span></label><textarea id="import-title" name="title" maxLength={500} required /></div>
           <div className="field"><label htmlFor="import-program">Program <span className="required-mark">*</span></label><select id="import-program" name="program" value={program} onChange={(event) => setProgram(event.target.value)} required><option value="">Select program</option><option value="BEED">BEED</option><option value="BSED">BSED</option><option value="BSA">BSA</option><option value="BSAIS">BSAIS</option><option value="BSBA">BSBA</option></select></div>
           {majors.length ? <div className="field"><label htmlFor="import-major">Major <span className="required-mark">*</span></label><select id="import-major" name="major" required><option value="">Select major</option>{majors.map((major) => <option key={major} value={major}>{major}</option>)}</select></div> : null}
+          <div className="field"><label htmlFor="import-design">Research design <span className="required-mark">*</span></label><select id="import-design" value={researchDesign} onChange={(event) => setResearchDesign(event.target.value)} required><option value="">Select research design</option>{RESEARCH_DESIGN_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></div>
+          {researchDesign === 'other' ? <div className="field"><label htmlFor="import-design-other">Specify research design <span className="required-mark">*</span></label><input id="import-design-other" name="researchDesignOther" maxLength={120} required /></div> : null}
           <div className="field"><label htmlFor="import-stage">Current defense stage <span className="required-mark">*</span></label><select id="import-stage" value={stage} onChange={(event) => setStage(event.target.value as Stage)}><option value="title">Title Defense</option><option value="proposal">Proposal Defense</option><option value="final">Final Defense</option></select></div>
         </div>
         <div className={styles.stageNote}><strong>{stageLabel(stage)}</strong><span>{stageNote(stage)}</span></div>
