@@ -3,11 +3,12 @@
 import Link from 'next/link'
 import { FormEvent, useMemo, useState } from 'react'
 import RoleFacultySearch, { SubmissionFaculty } from './role-faculty-search'
+import { RESEARCH_DESIGN_OPTIONS, researchDesignLabel } from '@/lib/research-design'
 
 type Mode = 'choice' | 'new' | 'continue'
 type DefenseType = 'title' | 'proposal' | 'final'
 type Step = 1 | 2 | 3 | 4
-type Values = { title: string; program: string; major: string; researchFileUrl: string; contactPerson: string; contactEmail: string; contactNumber: string; instructorId: string; adviserId: string }
+type Values = { title: string; program: string; major: string; researchDesign: string; researchDesignOther: string; researchFileUrl: string; contactPerson: string; contactEmail: string; contactNumber: string; instructorId: string; adviserId: string }
 type ExistingGroup = Values & { researchCode: string; members: string[] }
 type VerifyResult = { verified?: boolean; canContinue?: boolean; reason?: string | null; currentDefenseType?: string | null; currentStatus?: string; nextDefenseType?: DefenseType | null; group?: ExistingGroup; error?: string }
 type Success = { researchCode: string; defenseType: DefenseType; continued: boolean }
@@ -16,7 +17,7 @@ type Access = { researchCode: string }
 const BSED_MAJORS = ['English', 'Filipino', 'Mathematics', 'Science']
 const BSBA_MAJORS = ['MM', 'FM', 'HRM']
 const STEP_LABELS = ['Research', 'Group', 'Contact & File', 'Review']
-const EMPTY: Values = { title: '', program: '', major: '', researchFileUrl: '', contactPerson: '', contactEmail: '', contactNumber: '', instructorId: '', adviserId: '' }
+const EMPTY: Values = { title: '', program: '', major: '', researchDesign: '', researchDesignOther: '', researchFileUrl: '', contactPerson: '', contactEmail: '', contactNumber: '', instructorId: '', adviserId: '' }
 
 function defenseLabel(value: string | null | undefined) { return value === 'title' ? 'Title Defense' : value === 'proposal' ? 'Proposal Defense' : value === 'final' ? 'Final Defense' : 'Research Defense' }
 function validDrive(value: string) { try { const url = new URL(value.trim()); return url.protocol === 'https:' && ['drive.google.com', 'docs.google.com'].includes(url.hostname) } catch { return false } }
@@ -40,6 +41,7 @@ function ResearchRequestForm({ faculty, mode, defenseType, initial, access, onBa
     setValues((current) => {
       const next = { ...current, [key]: value }
       if (key === 'program' && current.program !== value) next.major = ''
+      if (key === 'researchDesign' && value !== 'other') next.researchDesignOther = ''
       return next
     })
     setError('')
@@ -50,6 +52,8 @@ function ResearchRequestForm({ faculty, mode, defenseType, initial, access, onBa
       if (!values.title.trim()) return 'Enter the research title.'
       if (!values.program) return 'Select the program.'
       if (majors.length && !values.major) return 'Select the major.'
+      if (!values.researchDesign) return 'Select the research design.'
+      if (values.researchDesign === 'other' && !values.researchDesignOther.trim()) return 'Specify the research design.'
     }
     if (target === 2 && !cleanMembers.length) return 'Enter at least one group member.'
     if (target === 3) {
@@ -88,7 +92,7 @@ function ResearchRequestForm({ faculty, mode, defenseType, initial, access, onBa
       const response = await fetch('/api/submissions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mode, researchCode: access?.researchCode, title: values.title.trim(), program: values.program, major: values.major || null, researchFileUrl: values.researchFileUrl.trim(), contactPerson: values.contactPerson.trim(), contactEmail: values.contactEmail.trim(), contactNumber: values.contactNumber.trim(), instructorId: values.instructorId || null, adviserId: values.adviserId || null, members: cleanMembers }),
+        body: JSON.stringify({ mode, researchCode: access?.researchCode, title: values.title.trim(), program: values.program, major: values.major || null, researchDesign: values.researchDesign, researchDesignOther: values.researchDesign === 'other' ? values.researchDesignOther.trim() : null, researchFileUrl: values.researchFileUrl.trim(), contactPerson: values.contactPerson.trim(), contactEmail: values.contactEmail.trim(), contactNumber: values.contactNumber.trim(), instructorId: values.instructorId || null, adviserId: values.adviserId || null, members: cleanMembers }),
       })
       const result = await response.json()
       if (!response.ok) throw new Error(result.error || 'Unable to submit the defense request.')
@@ -142,7 +146,7 @@ function ResearchRequestForm({ faculty, mode, defenseType, initial, access, onBa
       {error ? <div className="alert alert-error" role="alert">{error}</div> : null}
 
       {step === 1 ? (
-        <section className="lifecycle-form-section wizard-panel"><h3>Research</h3><div className="field-grid"><div className="field full"><label htmlFor={`${mode}-title`}>Research title <span className="required-mark">*</span></label><textarea id={`${mode}-title`} maxLength={500} onChange={(event) => setValue('title', event.target.value)} value={values.title} /></div><div className="field"><label htmlFor={`${mode}-program`}>Program <span className="required-mark">*</span></label><select id={`${mode}-program`} onChange={(event) => setValue('program', event.target.value)} value={values.program}><option value="">Select program</option><option value="BEED">BEED</option><option value="BSED">BSED</option><option value="BSA">BSA</option><option value="BSAIS">BSAIS</option><option value="BSBA">BSBA</option></select></div>{majors.length ? <div className="field"><label htmlFor={`${mode}-major`}>Major <span className="required-mark">*</span></label><select id={`${mode}-major`} onChange={(event) => setValue('major', event.target.value)} value={values.major}><option value="">Select major</option>{majors.map((major) => <option key={major}>{major}</option>)}</select></div> : null}</div></section>
+        <section className="lifecycle-form-section wizard-panel"><h3>Research</h3><div className="field-grid"><div className="field full"><label htmlFor={`${mode}-title`}>Research title <span className="required-mark">*</span></label><textarea id={`${mode}-title`} maxLength={500} onChange={(event) => setValue('title', event.target.value)} value={values.title} /></div><div className="field"><label htmlFor={`${mode}-program`}>Program <span className="required-mark">*</span></label><select id={`${mode}-program`} onChange={(event) => setValue('program', event.target.value)} value={values.program}><option value="">Select program</option><option value="BEED">BEED</option><option value="BSED">BSED</option><option value="BSA">BSA</option><option value="BSAIS">BSAIS</option><option value="BSBA">BSBA</option></select></div>{majors.length ? <div className="field"><label htmlFor={`${mode}-major`}>Major <span className="required-mark">*</span></label><select id={`${mode}-major`} onChange={(event) => setValue('major', event.target.value)} value={values.major}><option value="">Select major</option>{majors.map((major) => <option key={major}>{major}</option>)}</select></div> : null}<div className="field full"><label htmlFor={`${mode}-research-design`}>Research design <span className="required-mark">*</span></label><select id={`${mode}-research-design`} onChange={(event) => setValue('researchDesign', event.target.value)} value={values.researchDesign}><option value="">Select research design</option>{RESEARCH_DESIGN_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></div>{values.researchDesign === 'other' ? <div className="field full"><label htmlFor={`${mode}-research-design-other`}>Specify research design <span className="required-mark">*</span></label><input id={`${mode}-research-design-other`} maxLength={120} onChange={(event) => setValue('researchDesignOther', event.target.value)} value={values.researchDesignOther} /></div> : null}</div></section>
       ) : null}
 
       {step === 2 ? (
@@ -154,7 +158,7 @@ function ResearchRequestForm({ faculty, mode, defenseType, initial, access, onBa
       ) : null}
 
       {step === 4 ? (
-        <section className="lifecycle-form-section wizard-panel"><div className="wizard-review-heading"><div><h3>Review before submission</h3><p>Check the information below before sending your defense request.</p></div></div><div className="submission-review"><div className="review-card"><div className="review-card-head"><h3>Research</h3><button className="review-edit-button" onClick={() => moveTo(1)} type="button">Edit</button></div><dl className="review-grid"><div className="review-full"><dt>Research title</dt><dd>{values.title}</dd></div><div><dt>Program</dt><dd>{values.program}{values.major ? ` - ${values.major}` : ''}</dd></div></dl></div><div className="review-card"><div className="review-card-head"><h3>Group</h3><button className="review-edit-button" onClick={() => moveTo(2)} type="button">Edit</button></div><ol className="review-member-list">{cleanMembers.map((member, index) => <li key={`${member}-${index}`}>{member}</li>)}</ol><dl className="review-grid review-grid-spaced"><div><dt>Research instructor</dt><dd>{facultyName(faculty, values.instructorId)}</dd></div><div><dt>Research adviser</dt><dd>{facultyName(faculty, values.adviserId)}</dd></div></dl></div><div className="review-card"><div className="review-card-head"><h3>Contact & research file</h3><button className="review-edit-button" onClick={() => moveTo(3)} type="button">Edit</button></div><dl className="review-grid"><div><dt>Contact person</dt><dd>{values.contactPerson}</dd></div><div><dt>Email</dt><dd>{values.contactEmail || 'Not provided'}</dd></div><div><dt>Contact number</dt><dd>{values.contactNumber || 'Not provided'}</dd></div><div className="review-full"><dt>Research file</dt><dd><a className="review-file-link" href={values.researchFileUrl} rel="noopener noreferrer" target="_blank">Open Google Drive file ↗</a></dd></div></dl></div></div></section>
+        <section className="lifecycle-form-section wizard-panel"><div className="wizard-review-heading"><div><h3>Review before submission</h3><p>Check the information below before sending your defense request.</p></div></div><div className="submission-review"><div className="review-card"><div className="review-card-head"><h3>Research</h3><button className="review-edit-button" onClick={() => moveTo(1)} type="button">Edit</button></div><dl className="review-grid"><div className="review-full"><dt>Research title</dt><dd>{values.title}</dd></div><div><dt>Program</dt><dd>{values.program}{values.major ? ` - ${values.major}` : ''}</dd></div><div><dt>Research design</dt><dd>{researchDesignLabel(values.researchDesign, values.researchDesignOther)}</dd></div></dl></div><div className="review-card"><div className="review-card-head"><h3>Group</h3><button className="review-edit-button" onClick={() => moveTo(2)} type="button">Edit</button></div><ol className="review-member-list">{cleanMembers.map((member, index) => <li key={`${member}-${index}`}>{member}</li>)}</ol><dl className="review-grid review-grid-spaced"><div><dt>Research instructor</dt><dd>{facultyName(faculty, values.instructorId)}</dd></div><div><dt>Research adviser</dt><dd>{facultyName(faculty, values.adviserId)}</dd></div></dl></div><div className="review-card"><div className="review-card-head"><h3>Contact & research file</h3><button className="review-edit-button" onClick={() => moveTo(3)} type="button">Edit</button></div><dl className="review-grid"><div><dt>Contact person</dt><dd>{values.contactPerson}</dd></div><div><dt>Email</dt><dd>{values.contactEmail || 'Not provided'}</dd></div><div><dt>Contact number</dt><dd>{values.contactNumber || 'Not provided'}</dd></div><div className="review-full"><dt>Research file</dt><dd><a className="review-file-link" href={values.researchFileUrl} rel="noopener noreferrer" target="_blank">Open Google Drive file ↗</a></dd></div></dl></div></div></section>
       ) : null}
 
       <div className="lifecycle-form-actions">
