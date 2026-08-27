@@ -64,9 +64,9 @@ export default function AdminNavigation({ displayName }: { displayName: string }
 
       <div className="admin-nav-shell">
         <div className="container admin-nav-wrap">
-          <div className="admin-sidebar-brand" aria-label="Research Defense Admin Workspace">
-            <span className="admin-sidebar-logo">RD</span>
-            <span><strong>Research Defense</strong><small>Admin Workspace</small></span>
+          <div className="admin-sidebar-brand" aria-label="Research Office Admin Workspace">
+            <span className="admin-sidebar-logo">RO</span>
+            <span><strong>RESEARCH OFFICE</strong><small>Admin Workspace</small></span>
           </div>
 
           <div className="admin-mode-block" aria-label={`Admin mode, signed in as ${displayName}`}>
