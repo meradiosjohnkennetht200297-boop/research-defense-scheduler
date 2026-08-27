@@ -25,7 +25,7 @@ export async function POST(request: Request) {
 
     const { data: group, error } = await admin
       .from('research_groups')
-      .select('id, public_code, title, program, major, research_file_url, contact_person, contact_email, contact_number, instructor_id, adviser_id')
+      .select('id, public_code, title, program, major, research_design, research_design_other, research_file_url, contact_person, contact_email, contact_number, instructor_id, adviser_id')
       .eq('public_code', researchCode)
       .maybeSingle()
 
@@ -78,6 +78,8 @@ export async function POST(request: Request) {
         title: group.title,
         program: group.program ?? '',
         major: group.major ?? '',
+        researchDesign: group.research_design ?? '',
+        researchDesignOther: group.research_design_other ?? '',
         researchFileUrl: group.research_file_url ?? '',
         contactPerson: group.contact_person,
         contactEmail: group.contact_email ?? '',
