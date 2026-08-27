@@ -59,7 +59,7 @@ export async function POST(request: Request) {
     if (!researchFileUrl) return NextResponse.json({ error: 'Please provide a valid Google Drive or Google Docs research file link.' }, { status: 400 })
 
     const normalizedMajor = program === 'BSED' || program === 'BSBA' ? major : null
-    const designUpdate = { research_design: researchDesign, research_design_other: researchDesign === 'other' ? researchDesignOther : null }
+    const normalizedDesignOther = researchDesign === 'other' ? researchDesignOther : null
     const admin = createAdminClient()
 
     if (mode === 'continue') {
@@ -74,7 +74,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Enter a valid 4-character Research Code.' }, { status: 400 })
       }
 
-      const { data, error } = await admin.rpc('continue_research_group_v3', {
+      const { data, error } = await admin.rpc('continue_research_group_v4', {
         p_public_code: researchCode,
         p_title: title,
         p_contact_person: contactPerson,
@@ -86,6 +86,8 @@ export async function POST(request: Request) {
         p_program: program,
         p_major: normalizedMajor,
         p_members: members,
+        p_research_design: researchDesign,
+        p_research_design_other: normalizedDesignOther,
       })
       if (error) {
         console.error('Research continuation failed:', error.message)
@@ -97,12 +99,10 @@ export async function POST(request: Request) {
       await recordResearchCodeAttempt(admin, clientHash, researchCode, 'submit', codeExists)
 
       if (!result.ok) return NextResponse.json({ error: result.error || 'The next defense request could not be created.' }, { status: 409 })
-      const { error: designError } = await admin.from('research_groups').update(designUpdate).eq('public_code', researchCode)
-      if (designError) console.error('Research design update failed after continuation:', designError.message)
       return NextResponse.json({ researchCode: result.public_code, defenseType: result.defense_type, continued: true }, { status: 201 })
     }
 
-    const { data, error } = await admin.rpc('submit_research_group_v2', {
+    const { data, error } = await admin.rpc('submit_research_group_v3', {
       p_title: title,
       p_contact_person: contactPerson,
       p_contact_email: contactEmail,
@@ -115,6 +115,8 @@ export async function POST(request: Request) {
       p_defense_type: 'title',
       p_members: members,
       p_access_key_hash: null,
+      p_research_design: researchDesign,
+      p_research_design_other: normalizedDesignOther,
     })
     if (error) {
       console.error('Research submission failed:', error.message)
@@ -122,8 +124,6 @@ export async function POST(request: Request) {
     }
     const result = (data ?? {}) as { ok?: boolean; public_code?: string; defense_type?: string }
     if (!result.ok || !result.public_code) return NextResponse.json({ error: 'The submission could not be saved. Please try again.' }, { status: 500 })
-    const { error: designError } = await admin.from('research_groups').update(designUpdate).eq('public_code', result.public_code)
-    if (designError) console.error('Research design update failed after submission:', designError.message)
     return NextResponse.json({ researchCode: result.public_code, defenseType: result.defense_type, continued: false }, { status: 201 })
   } catch (error) {
     console.error('Submission route error:', error)
