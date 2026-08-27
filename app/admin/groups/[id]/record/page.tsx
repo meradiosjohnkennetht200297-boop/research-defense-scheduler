@@ -75,14 +75,14 @@ export default async function ResearchRecordOptions({
       <div className="container">
         <div className={styles.topbar}>
           <div className={styles.crumbs}>
-            <Link href="/admin/groups">Research Groups</Link>
+            <Link href="/admin/groups">Research Records</Link>
             <span>/</span>
             <Link href={`/admin/groups/${id}`}>{group.public_code}</Link>
             <span>/</span>
             <span>Record Options</span>
           </div>
           <Link className="button button-secondary button-small" href={`/admin/groups/${id}`}>
-            ← Back to workspace
+            ← Back to research record
           </Link>
         </div>
 
