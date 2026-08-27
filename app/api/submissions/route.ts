@@ -39,6 +39,7 @@ export async function POST(request: Request) {
     const major = cleanOptionalText(body.major, 40)
     const researchDesign = typeof body.researchDesign === 'string' ? body.researchDesign.trim() : ''
     const researchDesignOther = cleanOptionalText(body.researchDesignOther, 120)
+    const researchFileInput = typeof body.researchFileUrl === 'string' ? body.researchFileUrl.trim() : ''
     const researchFileUrl = cleanGoogleFileUrl(body.researchFileUrl)
     const contactPerson = cleanOptionalText(body.contactPerson, 150)
     const contactEmail = cleanOptionalText(body.contactEmail, 254)
@@ -56,7 +57,7 @@ export async function POST(request: Request) {
     if (!RESEARCH_DESIGN_VALUES.has(researchDesign)) return NextResponse.json({ error: 'Please select a valid research design.' }, { status: 400 })
     if (researchDesign === 'other' && !researchDesignOther) return NextResponse.json({ error: 'Please specify the research design.' }, { status: 400 })
     if (contactEmail && !/^\S+@\S+\.\S+$/.test(contactEmail)) return NextResponse.json({ error: 'Please enter a valid email address or leave it blank.' }, { status: 400 })
-    if (!researchFileUrl) return NextResponse.json({ error: 'Please provide a valid Google Drive or Google Docs research file link.' }, { status: 400 })
+    if (researchFileInput && !researchFileUrl) return NextResponse.json({ error: 'Please enter a valid Google Drive or Google Docs research file link, or leave it blank.' }, { status: 400 })
 
     const normalizedMajor = program === 'BSED' || program === 'BSBA' ? major : null
     const normalizedDesignOther = researchDesign === 'other' ? researchDesignOther : null
