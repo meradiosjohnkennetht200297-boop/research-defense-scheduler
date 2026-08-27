@@ -39,11 +39,11 @@ export default async function ImportExistingResearchPage() {
       <div className={`container ${styles.container}`}>
         <div className={styles.topbar}>
           <div>
-            <p className="eyebrow">Research Groups</p>
+            <p className="eyebrow">Research Records</p>
             <h1>Add existing research</h1>
-            <p>For groups that already reached Title, Proposal, or Final Defense before using the system.</p>
+            <p>Add a research record that already reached Title, Proposal, or Final Defense before using the system.</p>
           </div>
-          <Link className="button button-secondary button-small" href="/admin/groups">← Research Groups</Link>
+          <Link className="button button-secondary button-small" href="/admin/groups">← Research Records</Link>
         </div>
         <ExistingResearchImportForm faculty={(data ?? []) as Faculty[]} />
       </div>
