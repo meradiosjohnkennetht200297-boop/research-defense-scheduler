@@ -21,7 +21,7 @@ export default async function EditResearchSubmission({ params, searchParams }: {
   if (!adminProfile) redirect('/admin')
 
   const [groupResult, membersResult, facultyResult] = await Promise.all([
-    supabase.from('research_groups').select('id, public_code, title, program, major, defense_type, contact_person, contact_email, contact_number, research_file_url, instructor_id, adviser_id, status').eq('id', id).maybeSingle(),
+    supabase.from('research_groups').select('id, public_code, title, program, major, research_design, research_design_other, defense_type, contact_person, contact_email, contact_number, research_file_url, instructor_id, adviser_id, status').eq('id', id).maybeSingle(),
     supabase.from('group_members').select('full_name, sort_order').eq('research_group_id', id).order('sort_order', { ascending: true }),
     supabase.from('faculty').select('id, full_name, is_active, can_advise, can_teach_research').order('full_name', { ascending: true }),
   ])
