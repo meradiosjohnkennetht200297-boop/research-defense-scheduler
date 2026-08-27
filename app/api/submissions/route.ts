@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { isValidResearchCode, normalizeResearchCode } from '@/lib/research-access'
 import { recordResearchCodeAttempt, researchCodeClientHash, researchCodeRateLimited } from '@/lib/research-code-guard'
+import { RESEARCH_DESIGN_VALUES } from '@/lib/research-design'
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 const GOOGLE_FILE_HOSTS = new Set(['drive.google.com', 'docs.google.com'])
@@ -36,6 +37,8 @@ export async function POST(request: Request) {
     const title = cleanOptionalText(body.title, 500)
     const program = typeof body.program === 'string' ? body.program.trim().toUpperCase() : ''
     const major = cleanOptionalText(body.major, 40)
+    const researchDesign = typeof body.researchDesign === 'string' ? body.researchDesign.trim() : ''
+    const researchDesignOther = cleanOptionalText(body.researchDesignOther, 120)
     const researchFileUrl = cleanGoogleFileUrl(body.researchFileUrl)
     const contactPerson = cleanOptionalText(body.contactPerson, 150)
     const contactEmail = cleanOptionalText(body.contactEmail, 254)
@@ -50,10 +53,13 @@ export async function POST(request: Request) {
     if (!PROGRAMS.has(program)) return NextResponse.json({ error: 'Please select a valid program.' }, { status: 400 })
     if (program === 'BSED' && (!major || !BSED_MAJORS.has(major))) return NextResponse.json({ error: 'Please select a valid BSED major.' }, { status: 400 })
     if (program === 'BSBA' && (!major || !BSBA_MAJORS.has(major))) return NextResponse.json({ error: 'Please select a valid BSBA major.' }, { status: 400 })
+    if (!RESEARCH_DESIGN_VALUES.has(researchDesign)) return NextResponse.json({ error: 'Please select a valid research design.' }, { status: 400 })
+    if (researchDesign === 'other' && !researchDesignOther) return NextResponse.json({ error: 'Please specify the research design.' }, { status: 400 })
     if (contactEmail && !/^\S+@\S+\.\S+$/.test(contactEmail)) return NextResponse.json({ error: 'Please enter a valid email address or leave it blank.' }, { status: 400 })
     if (!researchFileUrl) return NextResponse.json({ error: 'Please provide a valid Google Drive or Google Docs research file link.' }, { status: 400 })
 
     const normalizedMajor = program === 'BSED' || program === 'BSBA' ? major : null
+    const designUpdate = { research_design: researchDesign, research_design_other: researchDesign === 'other' ? researchDesignOther : null }
     const admin = createAdminClient()
 
     if (mode === 'continue') {
@@ -91,6 +97,8 @@ export async function POST(request: Request) {
       await recordResearchCodeAttempt(admin, clientHash, researchCode, 'submit', codeExists)
 
       if (!result.ok) return NextResponse.json({ error: result.error || 'The next defense request could not be created.' }, { status: 409 })
+      const { error: designError } = await admin.from('research_groups').update(designUpdate).eq('public_code', researchCode)
+      if (designError) console.error('Research design update failed after continuation:', designError.message)
       return NextResponse.json({ researchCode: result.public_code, defenseType: result.defense_type, continued: true }, { status: 201 })
     }
 
@@ -114,6 +122,8 @@ export async function POST(request: Request) {
     }
     const result = (data ?? {}) as { ok?: boolean; public_code?: string; defense_type?: string }
     if (!result.ok || !result.public_code) return NextResponse.json({ error: 'The submission could not be saved. Please try again.' }, { status: 500 })
+    const { error: designError } = await admin.from('research_groups').update(designUpdate).eq('public_code', result.public_code)
+    if (designError) console.error('Research design update failed after submission:', designError.message)
     return NextResponse.json({ researchCode: result.public_code, defenseType: result.defense_type, continued: false }, { status: 201 })
   } catch (error) {
     console.error('Submission route error:', error)
