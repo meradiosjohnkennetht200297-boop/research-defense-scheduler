@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { RESEARCH_DESIGN_VALUES } from '@/lib/research-design'
 
 function text(value: unknown) {
   return typeof value === 'string' ? value.trim() : ''
@@ -26,11 +27,16 @@ export async function POST(request: Request) {
     if (!profile) return NextResponse.json({ error: 'Admin access required.' }, { status: 403 })
 
     const body = await request.json()
+    const researchDesign = text(body.researchDesign)
+    const researchDesignOther = text(body.researchDesignOther)
+    if (!RESEARCH_DESIGN_VALUES.has(researchDesign)) return NextResponse.json({ error: 'Select a valid research design.' }, { status: 400 })
+    if (researchDesign === 'other' && !researchDesignOther) return NextResponse.json({ error: 'Specify the research design.' }, { status: 400 })
+
     const members = Array.isArray(body.members) ? body.members.map(text).filter(Boolean).slice(0, 20) : []
     const panelMemberIds = Array.isArray(body.panelMemberIds) ? body.panelMemberIds.map(text).filter(Boolean).slice(0, 4) : []
     const hasSchedule = Boolean(body.hasSchedule)
 
-    const { data, error } = await supabase.rpc('import_existing_research_v1', {
+    const { data, error } = await supabase.rpc('import_existing_research_v2', {
       p_title: text(body.title),
       p_program: text(body.program),
       p_major: text(body.major) || null,
@@ -51,6 +57,8 @@ export async function POST(request: Request) {
       p_chair_id: hasSchedule ? optionalUuid(body.chairId) : null,
       p_panel_member_ids: hasSchedule ? panelMemberIds : [],
       p_is_published: hasSchedule ? Boolean(body.isPublished) : false,
+      p_research_design: researchDesign,
+      p_research_design_other: researchDesign === 'other' ? researchDesignOther.slice(0, 120) : null,
     })
 
     if (error) {
