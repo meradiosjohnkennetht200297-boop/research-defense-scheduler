@@ -83,7 +83,6 @@ export default function ExistingResearchImportForm({ faculty }: { faculty: Facul
       const end = String(form.get('endTime') ?? '')
       if (!String(form.get('defenseDate') ?? '')) return setError('Enter the defense date.')
       if (!start || !end || end <= start) return setError('End time must be later than start time.')
-      if (!String(form.get('venue') ?? '').trim()) return setError('Enter the venue.')
       if (!chairId) return setError('Select the panel chair.')
       const assigned = [chairId, ...cleanPanelMembers]
       if (new Set(assigned).size !== assigned.length) return setError('A faculty member cannot appear more than once on the panel.')
@@ -209,7 +208,7 @@ export default function ExistingResearchImportForm({ faculty }: { faculty: Facul
           <div className={styles.columnFields}>
             <div className="field"><label htmlFor="import-stage">Current defense stage <span className="required-mark">*</span></label><select id="import-stage" value={stage} onChange={(event) => setStage(event.target.value as Stage)}><option value="title">Title Defense</option><option value="proposal">Proposal Defense</option><option value="final">Final Defense</option></select><p className={styles.stageHelp}>{stageNote(stage)}</p></div>
 
-            <label className={styles.scheduleToggle}><input type="checkbox" checked={hasSchedule} onChange={(event) => setHasSchedule(event.target.checked)} /><span><strong>Already scheduled</strong><small>Add the date, time, venue, and panel now.</small></span></label>
+            <label className={styles.scheduleToggle}><input type="checkbox" checked={hasSchedule} onChange={(event) => setHasSchedule(event.target.checked)} /><span><strong>Already scheduled</strong><small>Add the date, time, optional venue, and panel now.</small></span></label>
 
             {hasSchedule ? (
               <div className={styles.scheduleFields}>
@@ -218,7 +217,7 @@ export default function ExistingResearchImportForm({ faculty }: { faculty: Facul
                   <div className="field"><label htmlFor="import-start">Start <span className="required-mark">*</span></label><input id="import-start" name="startTime" type="time" /></div>
                   <div className="field"><label htmlFor="import-end">End <span className="required-mark">*</span></label><input id="import-end" name="endTime" type="time" /></div>
                 </div>
-                <div className="field"><label htmlFor="import-venue">Venue <span className="required-mark">*</span></label><input id="import-venue" name="venue" maxLength={180} /></div>
+                <div className="field"><label htmlFor="import-venue">Venue</label><input id="import-venue" name="venue" maxLength={180} /></div>
                 <div className="field"><label htmlFor="import-chair">Panel chair <span className="required-mark">*</span></label><select id="import-chair" name="chairId"><option value="">Select chair</option>{chairs.map((person) => <option key={person.id} value={person.id}>{person.full_name}</option>)}</select></div>
 
                 <div className={styles.panelMembers}>
