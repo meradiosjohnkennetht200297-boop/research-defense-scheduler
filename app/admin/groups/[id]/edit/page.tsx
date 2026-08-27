@@ -42,8 +42,8 @@ export default async function EditResearchSubmission({ params, searchParams }: {
     <section className="section workspace-page">
       <div className="container workspace-layout">
         <div className="workspace-topbar workspace-refined-topbar">
-          <div className="workspace-breadcrumbs"><Link href="/admin/groups">Research Groups</Link><span aria-hidden="true">/</span><Link href={`/admin/groups/${group.id}`}>{group.public_code}</Link><span aria-hidden="true">/</span><span>Edit</span></div>
-          <Link className="button button-secondary button-small" href={`/admin/groups/${group.id}`}>← Back to Research Group</Link>
+          <div className="workspace-breadcrumbs"><Link href="/admin/groups">Research Records</Link><span aria-hidden="true">/</span><Link href={`/admin/groups/${group.id}`}>{group.public_code}</Link><span aria-hidden="true">/</span><span>Edit</span></div>
+          <Link className="button button-secondary button-small" href={`/admin/groups/${group.id}`}>← Back to Research Record</Link>
         </div>
 
         {query.saved ? <div className="alert alert-success">Submission information saved successfully.</div> : null}
