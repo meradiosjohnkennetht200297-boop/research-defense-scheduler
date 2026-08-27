@@ -163,14 +163,8 @@ export default async function MinimalHomeV2({ searchParams }: { searchParams: Pr
       <div className={`container ${styles.dashboardGrid}`}>
         <div className={styles.homeIntro}>
           <div>
-            <p className="eyebrow">Research Office</p>
-            <h1>Research Defense Schedule</h1>
-            <p className={styles.homeLead}>Submit a research record, check its progress, or view published defense schedules from one place.</p>
-          </div>
-
-          <div className={styles.primaryActions}>
-            <Link className="button" href="/status">Check Research Status</Link>
-            <Link className="button button-secondary" href="/submit">Submit Research</Link>
+            <h1>Defense Schedule</h1>
+            <p className={styles.homeLead}>Submit your research and view the defense schedule.</p>
           </div>
 
           <div className={styles.nextDefenseBlock}>
@@ -206,7 +200,6 @@ export default async function MinimalHomeV2({ searchParams }: { searchParams: Pr
         <div className={`card ${styles.calendarPanel}`}>
           <div className={styles.calendarTopbar}>
             <div>
-              <p className="eyebrow">Defense Calendar</p>
               <h2>{monthLabel(selectedMonth)}</h2>
             </div>
             <div className={styles.monthControls}>
