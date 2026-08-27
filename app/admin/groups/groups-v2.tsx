@@ -112,7 +112,10 @@ export default async function ResearchGroupsV2({ searchParams }: { searchParams:
   return (
     <section className={`section ${styles.page}`}>
       <div className="container">
-        <div className={styles.heading}><p className="eyebrow">Research Groups</p></div>
+        <div className={styles.heading}>
+          <div><p className="eyebrow">Research Records</p><h1>Research records</h1><p>Search, review, and manage research throughout the defense lifecycle.</p></div>
+          <Link className="button button-small" href="/admin/groups/import">+ Add Existing Research</Link>
+        </div>
 
         <form className={styles.toolbar} method="get">
           <div className={styles.toolbarRow}>
@@ -162,14 +165,14 @@ export default async function ResearchGroupsV2({ searchParams }: { searchParams:
         </form>
 
         <div className={styles.results}>
-          <span><strong>{total}</strong> {total === 1 ? 'research group' : 'research groups'}</span>
+          <span><strong>{total}</strong> {total === 1 ? 'research record' : 'research records'}</span>
           <span>Page {page} of {pages}</span>
         </div>
 
         {error ? (
-          <div className={`card ${styles.empty}`}><h3>Research groups could not be loaded.</h3><p>Please try again.</p></div>
+          <div className={`card ${styles.empty}`}><h3>Research records could not be loaded.</h3><p>Please try again.</p></div>
         ) : !groups.length ? (
-          <div className={`card ${styles.empty}`}><h3>No matching research groups.</h3><p>Adjust the search or filters to see other submissions.</p></div>
+          <div className={`card ${styles.empty}`}><h3>No matching research records.</h3><p>Adjust the search or filters to see other records.</p></div>
         ) : (
           <>
             <div className="admin-desktop-only admin-table-shell">
@@ -239,7 +242,7 @@ export default async function ResearchGroupsV2({ searchParams }: { searchParams:
         )}
 
         {pages > 1 ? (
-          <nav className={styles.pagination} aria-label="Research groups pagination">
+          <nav className={styles.pagination} aria-label="Research records pagination">
             {page > 1 ? <Link className="button button-secondary button-small" href={href(params, page - 1)}>← Previous</Link> : <span />}
             <span>Page <strong>{page}</strong> of <strong>{pages}</strong></span>
             {page < pages ? <Link className="button button-secondary button-small" href={href(params, page + 1)}>Next →</Link> : <span />}
