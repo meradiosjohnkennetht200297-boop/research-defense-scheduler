@@ -3,6 +3,23 @@
     gap: 8px;
   }
 
+  .brand {
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .brand-mark {
+    flex: 0 0 auto;
+  }
+
+  .brand strong {
+    display: block;
+    font-size: 0.78rem;
+    line-height: 1.05;
+    letter-spacing: 0.015em;
+    white-space: nowrap;
+  }
+
   .nav-links {
     gap: 7px;
   }
@@ -17,15 +34,22 @@
 }
 
 @media (max-width: 430px) {
-  .brand strong {
-    display: none;
+  .brand {
+    gap: 8px;
   }
 
-  .brand {
-    gap: 0;
+  .brand strong {
+    display: block;
+    font-size: 0.72rem;
   }
 
   .nav-links {
     margin-left: auto;
+  }
+}
+
+@media (max-width: 350px) {
+  .brand strong {
+    font-size: 0.66rem;
   }
 }
