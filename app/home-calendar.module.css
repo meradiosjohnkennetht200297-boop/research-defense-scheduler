@@ -385,11 +385,14 @@
   .primaryActions {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
   }
 
   .primaryActions :global(.button) {
     width: 100%;
     min-width: 0;
+    padding: 0 10px;
+    font-size: 0.76rem;
   }
 
   .nextDefenseBlock {
@@ -420,10 +423,6 @@
 }
 
 @media (max-width: 390px) {
-  .primaryActions {
-    grid-template-columns: 1fr;
-  }
-
   .calendarGrid {
     gap: 2px;
   }
