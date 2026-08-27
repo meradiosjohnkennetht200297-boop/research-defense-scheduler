@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import './globals.css'
-import './mobile-public-nav.css'
 import './enhancements.css'
 import './defense-features.css'
 import './public-schedule.css'
@@ -12,6 +11,7 @@ import './submit/submission-minimal.css'
 import './admin/workspace-core.css'
 import './admin/workspace-controls.css'
 import './admin/ended-workflow.css'
+import './mobile-public-nav.css'
 
 export const metadata: Metadata = {
   title: 'Research Office',
