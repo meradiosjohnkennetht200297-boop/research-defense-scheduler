@@ -162,7 +162,13 @@ export default async function MinimalHomeV2({ searchParams }: { searchParams: Pr
     <section className={styles.homeDashboard}>
       <div className={`container ${styles.dashboardGrid}`}>
         <div className={styles.homeIntro}>
-          <p className={styles.homeLead}>Submit your research and view the defense schedule.</p>
+          <div className={styles.introActions}>
+            <p className={styles.homeLead}>Submit your research and view the defense schedule.</p>
+            <div className={styles.primaryActions}>
+              <Link className="button button-secondary" href="/status">Check Status</Link>
+              <Link className="button" href="/submit">Submit Research</Link>
+            </div>
+          </div>
 
           <div className={styles.nextDefenseBlock}>
             <div className={styles.nextDefenseHeading}>
