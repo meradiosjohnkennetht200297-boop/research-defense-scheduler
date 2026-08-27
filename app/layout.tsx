@@ -13,8 +13,8 @@ import './admin/workspace-controls.css'
 import './admin/ended-workflow.css'
 
 export const metadata: Metadata = {
-  title: 'Research Defense Scheduler',
-  description: 'Submit research groups, continue defense stages, check research status, and view published schedules.',
+  title: 'Research Office',
+  description: 'Submit research, continue defense stages, check research status, and view published defense schedules.',
 }
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -39,14 +39,14 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <header className="site-header">
           <div className="container nav-wrap">
             <Link className="brand" href="/">
-              <span className="brand-mark">RD</span>
-              <span><strong>Research Defense</strong><small>Scheduler</small></span>
+              <span className="brand-mark">RO</span>
+              <span><strong>RESEARCH OFFICE</strong><small>Defense Scheduler</small></span>
             </Link>
             <nav className="nav-links" aria-label="Main navigation">
               {isAdmin ? (
                 <>
                   <Link href="/schedule">Public Schedule</Link>
-                  <Link href="/admin/groups">Research Groups</Link>
+                  <Link href="/admin/groups">Research Records</Link>
                   <Link className="button button-small" href="/admin/dashboard">Admin Workspace</Link>
                 </>
               ) : (
@@ -61,7 +61,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <main>{children}</main>
         <footer className="site-footer">
           <div className="container footer-wrap">
-            <span>Research Defense Scheduler</span>
+            <span>RESEARCH OFFICE</span>
             {isAdmin ? <Link href="/admin/dashboard">Admin Workspace</Link> : <Link href="/admin">Admin Login</Link>}
           </div>
         </footer>
