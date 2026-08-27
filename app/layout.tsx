@@ -40,7 +40,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
           <div className="container nav-wrap">
             <Link className="brand" href="/">
               <span className="brand-mark">RO</span>
-              <span><strong>RESEARCH OFFICE</strong><small>Defense Scheduler</small></span>
+              <span><strong>RESEARCH OFFICE</strong></span>
             </Link>
             <nav className="nav-links" aria-label="Main navigation">
               {isAdmin ? (
