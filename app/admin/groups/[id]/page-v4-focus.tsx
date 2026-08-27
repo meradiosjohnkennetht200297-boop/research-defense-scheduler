@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { researchDesignLabel } from '@/lib/research-design'
 import { saveDefenseSchedule } from './actions'
 import PanelAssignmentPicker from './panel-assignment-picker'
 import WorkspaceFormControls from './workspace-form-controls'
@@ -49,7 +50,7 @@ export default async function ResearchGroupWorkspaceV4({ params, searchParams }:
   if (!adminProfile) redirect('/admin')
 
   const [groupResult, membersResult, defensesResult, facultyResult] = await Promise.all([
-    supabase.from('research_groups').select('id, public_code, title, program, major, research_file_url, contact_person, contact_email, contact_number, instructor_id, adviser_id, status, defense_type, access_key_created_at').eq('id', id).maybeSingle(),
+    supabase.from('research_groups').select('id, public_code, title, program, major, research_design, research_design_other, research_file_url, contact_person, contact_email, contact_number, instructor_id, adviser_id, status, defense_type, access_key_created_at').eq('id', id).maybeSingle(),
     supabase.from('group_members').select('id, full_name, sort_order').eq('research_group_id', id).order('sort_order'),
     supabase.from('research_defenses').select(`id, defense_type, status, requested_at, completed_at, defense_schedules (id, defense_date, start_time, end_time, venue, notes, is_published, panel_assignments (faculty_id, panel_role, sort_order))`).eq('research_group_id', id).order('requested_at', { ascending: false }),
     supabase.from('faculty').select('id, full_name, is_active').order('full_name'),
@@ -71,6 +72,7 @@ export default async function ResearchGroupWorkspaceV4({ params, searchParams }:
   const instructorName = group.instructor_id ? facultyNames.get(group.instructor_id) ?? 'Not found' : 'Not assigned'
   const adviserName = group.adviser_id ? facultyNames.get(group.adviser_id) ?? 'Not found' : 'Not assigned'
   const programLabel = group.program ? `${group.program}${group.major ? ` · ${group.major}` : ''}` : 'Program not recorded'
+  const designLabel = researchDesignLabel(group.research_design, group.research_design_other)
   const currentType = currentDefense?.defense_type ?? null
   const stageStatus = currentDefense?.status ?? group.status
   const hasEnded = Boolean(schedule?.defense_date && schedule?.end_time && scheduleHasEnded(schedule.defense_date, schedule.end_time))
@@ -142,8 +144,9 @@ export default async function ResearchGroupWorkspaceV4({ params, searchParams }:
               </section>
 
               <section className="workspace-summary-block">
-                <div className="workspace-card-heading"><div><h3>Submission details</h3><p>Instructor and contact information</p></div></div>
+                <div className="workspace-card-heading"><div><h3>Submission details</h3><p>Research and contact information</p></div></div>
                 <dl className="detail-list">
+                  <div><dt>Research design</dt><dd>{designLabel}</dd></div>
                   <div><dt>Research instructor</dt><dd>{instructorName}</dd></div>
                   <div><dt>Contact person</dt><dd>{group.contact_person}</dd></div>
                   {group.contact_email ? <div><dt>Email</dt><dd>{group.contact_email}</dd></div> : null}
