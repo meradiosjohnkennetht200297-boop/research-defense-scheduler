@@ -91,8 +91,8 @@ export default async function ResearchGroupWorkspaceV4({ params, searchParams }:
     <section className="section workspace-page workspace-focus-page">
       <div className="container workspace-layout workspace-focus-layout">
         <div className="workspace-topbar workspace-refined-topbar">
-          <div className="workspace-breadcrumbs"><Link href="/admin/groups">Research Groups</Link><span aria-hidden="true">/</span><span>{group.public_code}</span></div>
-          <Link className="button button-secondary button-small" href="/admin/groups">← Back to Research Groups</Link>
+          <div className="workspace-breadcrumbs"><Link href="/admin/groups">Research Records</Link><span aria-hidden="true">/</span><span>{group.public_code}</span></div>
+          <Link className="button button-secondary button-small" href="/admin/groups">← Back to Research Records</Link>
         </div>
 
         {saved ? <div className="alert alert-success">Schedule saved successfully.</div> : null}
