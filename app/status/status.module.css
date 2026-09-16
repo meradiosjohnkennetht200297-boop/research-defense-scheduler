@@ -1,9 +1,9 @@
 .page {
-  padding-top: 44px;
+  padding-top: 36px;
 }
 
 .container {
-  max-width: 940px;
+  max-width: 860px;
 }
 
 .hero {
@@ -16,8 +16,8 @@
 
 .hero h1 {
   margin: 4px 0 10px;
-  font-size: clamp(2.3rem, 7vw, 4.2rem);
-  line-height: 0.98;
+  font-size: clamp(1.9rem, 4vw, 2.6rem);
+  line-height: 1.16;
   letter-spacing: -0.055em;
 }
 
@@ -33,7 +33,7 @@
   flex: 0 0 auto;
   margin-top: 2px;
   color: var(--muted);
-  font-size: 0.82rem;
+  font-size: .875rem;
   font-weight: 800;
 }
 
@@ -43,7 +43,7 @@
 
 .searchCard {
   display: grid;
-  grid-template-columns: minmax(150px, 0.42fr) minmax(0, 1fr);
+  grid-template-columns: minmax(140px, .55fr) minmax(0, 1fr);
   gap: 14px 22px;
   align-items: end;
   padding: 22px;
@@ -63,7 +63,7 @@
 .searchCopy span,
 .searchHint {
   color: var(--muted);
-  font-size: 0.76rem;
+  font-size: .875rem;
   line-height: 1.45;
 }
 
@@ -99,8 +99,8 @@
 }
 
 .searchHint {
-  grid-column: 2;
-  margin-left: 1px;
+  margin: 14px 0 0;
+  max-width: 650px;
 }
 
 .message {
@@ -122,14 +122,14 @@
   border-radius: 999px;
   background: var(--surface-soft);
   color: #41464d;
-  font-size: 0.7rem;
+  font-size: .875rem;
   font-weight: 800;
   white-space: nowrap;
 }
 
 .introNote p {
   margin: 0;
-  font-size: 0.78rem;
+  font-size: .875rem;
   line-height: 1.5;
 }
 
@@ -162,7 +162,7 @@
 .notFound p {
   margin: 0;
   color: var(--muted);
-  font-size: 0.84rem;
+  font-size: .875rem;
   line-height: 1.5;
 }
 
@@ -195,7 +195,7 @@
 
 .recordLabel {
   color: var(--muted);
-  font-size: 0.69rem;
+  font-size: .875rem;
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -211,7 +211,7 @@
 .summaryMain > p {
   margin: 0;
   color: var(--muted);
-  font-size: 0.84rem;
+  font-size: .875rem;
 }
 
 .currentProgress {
@@ -223,7 +223,7 @@
 
 .currentProgress > span:first-child {
   color: var(--muted);
-  font-size: 0.68rem;
+  font-size: .875rem;
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -255,7 +255,7 @@
   max-width: 330px;
   margin: 0;
   color: var(--muted);
-  font-size: 0.78rem;
+  font-size: .875rem;
   line-height: 1.5;
   text-align: right;
 }
@@ -288,7 +288,7 @@
   border-radius: 50%;
   background: var(--bg);
   color: #68707a;
-  font-size: 0.76rem;
+  font-size: .875rem;
   font-weight: 900;
 }
 
@@ -332,7 +332,7 @@
   border-radius: 999px;
   background: #eef0f3;
   color: #59616b;
-  font-size: 0.67rem;
+  font-size: .875rem;
   font-weight: 800;
   white-space: nowrap;
 }
@@ -340,7 +340,7 @@
 .stageDetail p {
   margin: 0;
   color: var(--muted);
-  font-size: 0.82rem;
+  font-size: .875rem;
   line-height: 1.55;
 }
 
@@ -362,14 +362,14 @@
 
 .scheduleBox span {
   color: var(--muted);
-  font-size: 0.64rem;
+  font-size: .875rem;
   font-weight: 800;
   letter-spacing: 0.055em;
   text-transform: uppercase;
 }
 
 .scheduleBox strong {
-  font-size: 0.79rem;
+  font-size: .875rem;
   line-height: 1.4;
 }
 
@@ -386,15 +386,15 @@
 }
 
 .scheduled .marker {
-  border-color: #b7c8e8;
-  background: #f0f5ff;
-  color: #3156a3;
+  border-color: var(--line);
+  background: var(--accent-soft);
+  color: var(--accent);
 }
 
 .scheduled.stateBadge,
 .stateBadge.scheduled {
-  background: #eef3ff;
-  color: #3156a3;
+  background: var(--accent-soft);
+  color: var(--accent);
 }
 
 .pending .marker,
@@ -438,13 +438,13 @@
 .legacy strong {
   display: block;
   margin-bottom: 5px;
-  font-size: 0.82rem;
+  font-size: .875rem;
 }
 
 .legacy p {
   margin: 0;
   color: var(--muted);
-  font-size: 0.76rem;
+  font-size: .875rem;
   line-height: 1.5;
 }
 
@@ -492,7 +492,7 @@
 
 @media (max-width: 520px) {
   .hero h1 {
-    font-size: 2.55rem;
+    font-size: 1.9rem;
   }
 
   .searchCard {
@@ -546,3 +546,9 @@
     margin-left: 45px;
   }
 }
+
+.searchControls input { min-width: 0; border-color: #a8baae; border-radius: 8px; }
+.searchControls input::placeholder { color: #65786a; }
+.homeLink { display: inline-flex; align-items: center; min-height: 44px; }
+.summary h2, .scheduleBox strong { overflow-wrap: anywhere; }
+.searchCopy label { color: var(--text); }

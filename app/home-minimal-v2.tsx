@@ -163,21 +163,24 @@ export default async function MinimalHomeV2({ searchParams }: { searchParams: Pr
       <div className={`container ${styles.dashboardGrid}`}>
         <div className={styles.homeIntro}>
           <div className={styles.introActions}>
-            <p className={styles.homeLead}>Submit your research and view the defense schedule.</p>
+            <p className="eyebrow">Research Office</p>
+            <h1 className={styles.homeTitle}>Research Defense Scheduler</h1>
+            <p className={styles.homeLead}>View defense schedules, submit your research, and follow your defense progress.</p>
             <div className={styles.primaryActions}>
+              <Link className={`button ${styles.scheduleAction}`} href="/schedule">View Defense Schedule</Link>
+              <Link className="button button-secondary" href="/submit">Submit Research</Link>
               <Link className="button button-secondary" href="/status">Check Status</Link>
-              <Link className="button" href="/submit">Submit Research</Link>
             </div>
           </div>
 
           <div className={styles.nextDefenseBlock}>
             <div className={styles.nextDefenseHeading}>
-              <span>Next Defense</span>
-              <Link href="/schedule">View all →</Link>
+              <h2>Next defense</h2>
+              <Link href="/schedule">All defenses →</Link>
             </div>
 
             {nextResult.error ? (
-              <div className={styles.nextDefenseEmpty}>Upcoming defense information is temporarily unavailable.</div>
+              <div className={styles.nextDefenseEmpty} role="alert"><strong>Unable to load the next defense.</strong><span>Please refresh the page or try again later.</span><Link className="text-link" href="/">Try again →</Link></div>
             ) : nextSchedule && nextStage ? (
               <Link className={styles.nextDefenseCard} href={`/schedule?date=${nextSchedule.defense_date}`}>
                 <div className={styles.nextDefenseWhen}>
@@ -189,12 +192,12 @@ export default async function MinimalHomeV2({ searchParams }: { searchParams: Pr
                   <span className="public-program-badge">{programLabel(nextStage)}</span>
                 </div>
                 <h2>{nextStage.title_snapshot}</h2>
-                <p>{nextSchedule.venue?.trim() || 'Venue not specified'}</p>
+                <p>{nextSchedule.venue?.trim() || 'Venue to be announced'}</p>
               </Link>
             ) : (
               <div className={styles.nextDefenseEmpty}>
-                <strong>No upcoming published defense.</strong>
-                <span>Marked calendar dates may still contain completed defenses.</span>
+                <strong>No upcoming defenses announced.</strong>
+                <span>Check back for new schedules. You can still view completed defenses.</span>
               </div>
             )}
           </div>
@@ -203,7 +206,7 @@ export default async function MinimalHomeV2({ searchParams }: { searchParams: Pr
         <div className={`card ${styles.calendarPanel}`}>
           <div className={styles.calendarTopbar}>
             <div>
-              <p className="eyebrow">Defense Calendar</p>
+              <p className="eyebrow">Defense dates</p>
               <h2>{monthLabel(selectedMonth)}</h2>
             </div>
             <div className={styles.monthControls}>
@@ -212,6 +215,15 @@ export default async function MinimalHomeV2({ searchParams }: { searchParams: Pr
             </div>
           </div>
 
+          {calendarResult.error ? <div className={styles.nextDefenseEmpty} role="alert"><strong>Unable to load defense dates.</strong><span>Please refresh the page or try again later.</span><Link className="text-link" href={`/?month=${selectedMonth}`}>Try again →</Link></div> : <>
+          <div className={styles.mobileAgenda}>
+            {calendarDates.size ? Array.from(calendarDates, ([dateKey, entry]) => <Link className={styles.agendaDate} key={dateKey} href={`/schedule?date=${dateKey}`}>
+              <strong>{formatCompactDate(dateKey)}</strong>
+              <span>{entry.count} {entry.count === 1 ? 'defense' : 'defenses'} · {entry.hasScheduled ? (entry.hasCompleted ? 'Scheduled & completed' : 'Scheduled') : '✓ Completed'}</span>
+              <span className={styles.agendaAction}>View details →</span>
+            </Link>) : <p className={styles.monthEmpty}>No defenses announced for this month. Choose another month or view all schedules.</p>}
+          </div>
+          <div className={styles.desktopCalendar}>
           <div className={styles.weekdays} aria-hidden="true">
             {WEEKDAYS.map((weekday) => <span key={weekday}>{weekday}</span>)}
           </div>
@@ -248,8 +260,11 @@ export default async function MinimalHomeV2({ searchParams }: { searchParams: Pr
               <span className={styles.legendItem}><i className={styles.legendDot} aria-hidden="true" />Scheduled</span>
               <span className={styles.legendItem}><b className={styles.legendCheck} aria-hidden="true">✓</b>Completed</span>
             </div>
-            <span>Click a marked date to view details.</span>
+            <span>Select a marked date for details.</span>
           </div>
+          </div>
+          </>}
+          <Link className={styles.allSchedules} href="/schedule">View all defense schedules →</Link>
         </div>
       </div>
     </section>
