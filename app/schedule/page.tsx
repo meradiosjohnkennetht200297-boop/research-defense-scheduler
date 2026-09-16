@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { isUpcomingDefense, publicDefenseStatus } from '@/lib/public-defense-state'
 import { createClient } from '@/lib/supabase/server'
 
 export const metadata = { title: 'Defense Schedule' }
@@ -44,10 +45,6 @@ function programLabel(defense: ResearchDefense) {
   return defense.program_snapshot ? `${defense.program_snapshot}${defense.major_snapshot ? ` - ${defense.major_snapshot}` : ''}` : 'Program not recorded'
 }
 
-function statusLabel(status: string) {
-  return status === 'completed' ? 'Completed' : 'Scheduled'
-}
-
 export default async function PublicSchedule({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const params = await searchParams
   const q = String(params.q ?? '').trim().slice(0, 150)
@@ -72,8 +69,7 @@ export default async function PublicSchedule({ searchParams }: { searchParams: P
   const schedules = ((data ?? []) as ScheduleRow[]).filter((schedule) => {
     const stage = one(schedule.research_defenses)
     if (!stage) return false
-    const notEnded = new Date(`${schedule.defense_date}T${schedule.end_time}+08:00`).getTime() > now
-    if (view === 'upcoming' && (stage.status !== 'scheduled' || !notEnded)) return false
+    if (view === 'upcoming' && !isUpcomingDefense(stage.status, schedule.defense_date, schedule.end_time, now)) return false
     if (view === 'completed' && stage.status !== 'completed') return false
     if (q && !stage.title_snapshot.toLowerCase().includes(q.toLowerCase())) return false
     if (defense && stage.defense_type !== defense) return false
@@ -81,7 +77,7 @@ export default async function PublicSchedule({ searchParams }: { searchParams: P
     if (date && schedule.defense_date !== date) return false
     return true
   }).sort((a, b) => {
-    const future = (row: ScheduleRow) => one(row.research_defenses)?.status === 'scheduled' && new Date(`${row.defense_date}T${row.end_time}+08:00`).getTime() > now
+    const future = (row: ScheduleRow) => isUpcomingDefense(one(row.research_defenses)?.status ?? '', row.defense_date, row.end_time, now)
     const aFuture = future(a), bFuture = future(b)
     if (aFuture !== bFuture) return aFuture ? -1 : 1
     const byDate = a.defense_date.localeCompare(b.defense_date)
@@ -103,15 +99,14 @@ export default async function PublicSchedule({ searchParams }: { searchParams: P
       <div className="container">
         <div className="minimal-page-heading">
           <div>
-            <p className="eyebrow">Research Office</p>
             <h1>{dayView && date ? `Defenses on ${formatLongDate(date)}` : 'Defense schedule'}</h1>
-            <p>{dayView ? 'Defense times and details for this date. All times are Philippine time (UTC+8).' : 'Find defense dates, times, venues, and panel members. All times are Philippine time (UTC+8).'}</p>
+            <p>{dayView ? 'Defense times and details for this date. All times are Philippine time (UTC+8).' : 'Published defense schedules. All times are Philippine time (UTC+8).'}</p>
           </div>
-          <Link className="button button-secondary button-small" href={dayView && date ? `/?month=${date.slice(0, 7)}` : '/'}>{dayView ? '← Calendar' : '← Home'}</Link>
+          {dayView && date ? <Link className="button button-secondary button-small" href={`/?month=${date.slice(0, 7)}`}>← Defense dates</Link> : null}
         </div>
 
         <nav className="schedule-views" aria-label="Schedule views">
-          {[['all', 'All defenses'], ['upcoming', 'Upcoming'], ['completed', 'Completed']].map(([value, label]) => <Link key={value} href={viewHref(value)} aria-current={view === value ? 'page' : undefined}>{label}</Link>)}
+          {[['all', 'All'], ['upcoming', 'Upcoming'], ['completed', 'Completed']].map(([value, label]) => <Link key={value} href={viewHref(value)} aria-current={view === value ? 'page' : undefined}>{label}</Link>)}
         </nav>
 
         {dayView ? <div className="minimal-schedule-tools"><span className="minimal-result-count">{schedules.length} {schedules.length === 1 ? 'defense' : 'defenses'}</span></div> : (
@@ -145,7 +140,7 @@ export default async function PublicSchedule({ searchParams }: { searchParams: P
               const chairName = one(chair?.faculty)?.full_name ?? null
               const members = panel.filter((item) => item.panel_role === 'member').map((item) => one(item.faculty)?.full_name).filter((name): name is string => Boolean(name))
 
-              return <article className={`minimal-schedule-card${stage.status === 'completed' ? ' is-completed-defense' : ''}`} key={schedule.id}><div className="minimal-schedule-when"><strong>{dayView ? `${formatTime(schedule.start_time)} – ${formatTime(schedule.end_time)}` : formatDate(schedule.defense_date)}</strong>{!dayView ? <span>{formatTime(schedule.start_time)} – {formatTime(schedule.end_time)}</span> : null}</div><div className="minimal-schedule-main"><div className="minimal-defense-labels"><span className={`public-status-badge status-${stage.status}`}>{stage.status === 'completed' ? '✓ Completed' : new Date(`${schedule.defense_date}T${schedule.end_time}+08:00`).getTime() <= now ? 'Awaiting update' : statusLabel(stage.status)}</span><span className={`public-defense-badge type-${stage.defense_type ?? 'general'}`}>{defenseLabel(stage.defense_type)}</span><span className="public-program-badge">{programLabel(stage)}</span></div><h2>{stage.title_snapshot}</h2><p><strong>Venue:</strong> {schedule.venue?.trim() || 'To be announced'}</p></div><div className="minimal-panel"><div><span>Panel Chair</span><strong>{chairName ?? 'Not listed'}</strong></div><div><span>Panel Members</span><p>{members.length ? members.join(', ') : 'Not listed'}</p></div></div></article>
+              return <article className={`minimal-schedule-card${stage.status === 'completed' ? ' is-completed-defense' : ''}`} key={schedule.id}><div className="minimal-schedule-when"><strong>{dayView ? `${formatTime(schedule.start_time)} – ${formatTime(schedule.end_time)}` : formatDate(schedule.defense_date)}</strong>{!dayView ? <span>{formatTime(schedule.start_time)} – {formatTime(schedule.end_time)}</span> : null}</div><div className="minimal-schedule-main"><div className="minimal-defense-labels"><span className={`public-status-badge status-${stage.status}`}>{publicDefenseStatus(stage.status, schedule.defense_date, schedule.end_time, now)}</span><span className={`public-defense-badge type-${stage.defense_type ?? 'general'}`}>{defenseLabel(stage.defense_type)}</span><span className="public-program-badge">{programLabel(stage)}</span></div><h2>{stage.title_snapshot}</h2><p><strong>Venue:</strong> {schedule.venue?.trim() || 'To be announced'}</p></div><div className="minimal-panel"><div><span>Panel Chair</span><strong>{chairName ?? 'Not listed'}</strong></div><div><span>Panel Members</span><p>{members.length ? members.join(', ') : 'Not listed'}</p></div></div></article>
             })}
           </div>
         )}

@@ -135,6 +135,8 @@
   .public-nav { display: grid; grid-template-columns: .8fr 1.2fr 1fr; gap: 4px; margin-top: 12px; padding-block: 8px; border-top: 1px solid #37604d; }
   .public-nav a { padding: 9px 4px; font-size: .875rem; text-align: center; }
   .public-site .section { padding-top: 24px; }
+  .schedule-views { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 6px; }
+  .schedule-views a { justify-content: center; padding-inline: 4px; font-size: .85rem; }
   .public-site .minimal-schedule-card { grid-template-columns: minmax(0,1fr); padding: 18px; gap: 14px; }
   .public-site .minimal-schedule-when { flex-direction: column; align-items: flex-start; padding: 0 0 14px; border-right: 0; border-bottom: 1px solid var(--line); gap: 3px; }
   .public-site .minimal-panel { grid-column: 1; }
@@ -154,3 +156,6 @@
 @media (prefers-reduced-motion: reduce) {
   .public-site *, .public-site *::before, .public-site *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
 }
+
+.public-site .field [aria-invalid="true"] { border-color: var(--danger); }
+.public-site .wizard-panel:focus { outline: none; }

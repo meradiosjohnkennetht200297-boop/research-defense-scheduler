@@ -5,8 +5,8 @@ import { usePathname } from 'next/navigation'
 
 const publicLinks = [
   { href: '/schedule', label: 'Schedule' },
-  { href: '/submit', label: 'Submit Research' },
-  { href: '/status', label: 'Check Status' },
+  { href: '/submit', label: 'Submit' },
+  { href: '/status', label: 'Status' },
 ]
 
 export default function SiteShell({ children, isAdmin }: { children: React.ReactNode; isAdmin: boolean }) {

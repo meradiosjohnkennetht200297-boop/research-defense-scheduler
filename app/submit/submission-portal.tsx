@@ -148,7 +148,7 @@ function ResearchRequestForm({ faculty, mode, defenseType, initial, access, onBa
         })}
       </div>
 
-      <p className="wizard-step-label">Step {step} of 4: {STEP_LABELS[step - 1]} · * Required</p>
+      <p className="wizard-step-label" aria-live="polite">Step {step} of 4: {STEP_LABELS[step - 1]} · * Required</p>
       {error ? <div className="alert alert-error" ref={errorRef} tabIndex={-1} role="alert">{error}</div> : null}
 
       {step === 1 ? (

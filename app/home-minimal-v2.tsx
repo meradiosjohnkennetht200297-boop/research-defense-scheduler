@@ -163,7 +163,6 @@ export default async function MinimalHomeV2({ searchParams }: { searchParams: Pr
       <div className={`container ${styles.dashboardGrid}`}>
         <div className={styles.homeIntro}>
           <div className={styles.introActions}>
-            <p className="eyebrow">Research Office</p>
             <h1 className={styles.homeTitle}>Research Defense Scheduler</h1>
             <p className={styles.homeLead}>View defense schedules, submit your research, and follow your defense progress.</p>
             <div className={styles.primaryActions}>
