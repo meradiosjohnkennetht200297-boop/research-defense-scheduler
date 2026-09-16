@@ -59,7 +59,6 @@ export default function ResearchStatusClient() {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!/^[A-Z0-9]{4}$/.test(researchCode)) { setError('Enter the 4-character Research Code you received after submission.'); return }
     setLoading(true)
     setError('')
     setResult(null)
@@ -70,10 +69,10 @@ export default function ResearchStatusClient() {
         body: JSON.stringify({ researchCode }),
       })
       const data = await response.json()
-      if (!response.ok) throw new Error(response.status === 404 ? 'Research Code not found. Check the four characters and try again. If you have lost your code, contact the Research Office.' : data.error || 'Unable to check research status. Please try again later.')
+      if (!response.ok) throw new Error(data.error || 'Unable to check research status.')
       setResult(data)
     } catch (caught) {
-      setError(caught instanceof TypeError ? 'Unable to connect. Check your internet connection and try again.' : caught instanceof Error ? caught.message : 'Unable to check research status. Please try again.')
+      setError(caught instanceof Error ? caught.message : 'Unable to check research status.')
     } finally {
       setLoading(false)
     }
@@ -88,29 +87,25 @@ export default function ResearchStatusClient() {
         <header className={styles.hero}>
           <div>
             <p className="eyebrow">Research Status</p>
-            <h1>Check submission status</h1>
-            <p>See your defense progress and confirmed schedule using your Research Code.</p>
+            <h1>Check your research</h1>
+            <p>Enter your private 4-character Research Code.</p>
           </div>
           <Link className={styles.homeLink} href="/">← Home</Link>
         </header>
 
-        <form className={`card ${styles.searchCard}`} aria-busy={loading} onSubmit={submit}>
+        <form className={`card ${styles.searchCard}`} onSubmit={submit}>
           <div className={styles.searchCopy}>
-            <label htmlFor="research-code"><strong>Research Code</strong></label>
+            <strong>Research Code</strong>
             <span>Keep this code private.</span>
           </div>
           <div className={styles.searchControls}>
             <input
-              id="research-code"
-              aria-describedby="research-code-help"
-              minLength={4}
-              pattern="[A-Za-z0-9]{4}"
-              spellCheck={false}
+              aria-label="Research Code"
               autoCapitalize="characters"
               autoComplete="off"
               maxLength={4}
               onChange={(event) => setResearchCode(event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4))}
-              placeholder="e.g. K7M4"
+              placeholder="K7M4"
               required
               value={researchCode}
             />
@@ -118,12 +113,10 @@ export default function ResearchStatusClient() {
           </div>
         </form>
 
-        <p id="research-code-help" className={styles.searchHint}>Use the private 4-character code from your submission. Lost your code? Contact the Research Office.</p>
-        {loading ? <p role="status" className={styles.searchHint}>Checking your defense progress…</p> : null}
-        {error ? <div role="alert" className={`alert alert-error ${styles.message}`}>{error}</div> : null}
+        {error ? <div className={`alert alert-error ${styles.message}`}>{error}</div> : null}
 
         {result ? (
-          <div className={styles.results} aria-live="polite">
+          <div className={styles.results}>
             <article className={`card ${styles.summary}`}>
               <div className={styles.summaryMain}>
                 <div className={styles.summaryLabels}><span className={styles.recordLabel}>Research record</span></div>
@@ -160,13 +153,13 @@ export default function ResearchStatusClient() {
                       <div className={styles.stageDetail}>
                         {stage.state === 'notRequested' ? <p>This stage has not been requested yet.</p> : null}
                         {stage.state === 'pending' ? <p>Your request has been received and is waiting to be scheduled.</p> : null}
-                        {stage.state === 'awaiting' ? <p>The scheduled defense time has ended and is waiting for confirmation from the Research Office.</p> : null}
+                        {stage.state === 'awaiting' ? <p>The scheduled defense time has ended and is awaiting administrator confirmation.</p> : null}
                         {stage.state === 'scheduled' && !stage.schedule ? <p>Your defense is scheduled. Details will appear here once they are published.</p> : null}
                         {stage.state === 'scheduled' && stage.schedule ? (
                           <div className={styles.scheduleBox}>
                             <div><span>Date</span><strong>{formatDate(stage.schedule.defenseDate)}</strong></div>
                             <div><span>Time</span><strong>{formatTime(stage.schedule.startTime)}–{formatTime(stage.schedule.endTime)}</strong></div>
-                            <div><span>Venue</span><strong>{stage.schedule.venue || 'To be announced'}</strong></div>
+                            <div><span>Venue</span><strong>{stage.schedule.venue}</strong></div>
                           </div>
                         ) : null}
                         {stage.state === 'completed' ? <p>{stage.completedAt ? `Completed on ${formatDate(stage.completedAt)}.` : 'This defense stage is completed.'}</p> : null}
@@ -178,8 +171,8 @@ export default function ResearchStatusClient() {
 
                 {result.hasLegacy ? (
                   <article className={`${styles.legacy} card`}>
-                    <strong>Earlier defense record</strong>
-                    <p>An older defense exists without a recorded stage. Contact the Research Office if you need help continuing to your next defense.</p>
+                    <strong>Legacy defense record</strong>
+                    <p>An older defense exists without a recorded stage. Contact the administrator if this must be corrected before continuing.</p>
                   </article>
                 ) : null}
               </div>

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import SiteShell from './components/site-shell'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import './globals.css'
 import './enhancements.css'
@@ -12,10 +12,9 @@ import './admin/workspace-core.css'
 import './admin/workspace-controls.css'
 import './admin/ended-workflow.css'
 import './mobile-public-nav.css'
-import './public-ui.css'
 
 export const metadata: Metadata = {
-  title: { default: 'Research Defense Scheduler | Research Office', template: '%s | Research Office' },
+  title: 'Research Office',
   description: 'Submit research, continue defense stages, check research status, and view published defense schedules.',
 }
 
@@ -38,7 +37,28 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   return (
     <html lang="en">
       <body>
-        <SiteShell isAdmin={isAdmin}>{children}</SiteShell>
+        <header className="site-header">
+          <div className="container nav-wrap">
+            <Link className="brand" href="/">
+              <span className="brand-mark">RO</span>
+              <span><strong>RESEARCH OFFICE</strong></span>
+            </Link>
+            {isAdmin ? (
+              <nav className="nav-links" aria-label="Main navigation">
+                <Link href="/schedule">Public Schedule</Link>
+                <Link href="/admin/groups">Research Records</Link>
+                <Link className="button button-small" href="/admin/dashboard">Admin Workspace</Link>
+              </nav>
+            ) : null}
+          </div>
+        </header>
+        <main>{children}</main>
+        <footer className="site-footer">
+          <div className="container footer-wrap">
+            <span>RESEARCH OFFICE</span>
+            {isAdmin ? <Link href="/admin/dashboard">Admin Workspace</Link> : <Link href="/admin">Admin Login</Link>}
+          </div>
+        </footer>
       </body>
     </html>
   )

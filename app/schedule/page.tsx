@@ -1,15 +1,12 @@
 import Link from 'next/link'
-import { isUpcomingDefense, publicDefenseStatus } from '@/lib/public-defense-state'
 import { createClient } from '@/lib/supabase/server'
-
-export const metadata = { title: 'Defense Schedule' }
 
 type DefenseType = 'title' | 'proposal' | 'final'
 type FacultyName = { full_name: string }
 type PanelAssignment = { panel_role: 'chair' | 'member'; sort_order: number; faculty: FacultyName | FacultyName[] | null }
 type ResearchDefense = { defense_type: DefenseType | null; status: string; title_snapshot: string; program_snapshot: string | null; major_snapshot: string | null }
 type ScheduleRow = { id: string; defense_date: string; start_time: string; end_time: string; venue: string | null; research_defenses: ResearchDefense | ResearchDefense[] | null; panel_assignments: PanelAssignment[] | null }
-type SearchParams = { q?: string; defense?: string; program?: string; date?: string; view?: string }
+type SearchParams = { q?: string; defense?: string; program?: string; date?: string }
 
 const DEFENSE_TYPES = new Set<DefenseType>(['title', 'proposal', 'final'])
 const PROGRAMS = new Set(['BEED', 'BSED', 'BSA', 'BSAIS', 'BSBA'])
@@ -45,6 +42,10 @@ function programLabel(defense: ResearchDefense) {
   return defense.program_snapshot ? `${defense.program_snapshot}${defense.major_snapshot ? ` - ${defense.major_snapshot}` : ''}` : 'Program not recorded'
 }
 
+function statusLabel(status: string) {
+  return status === 'completed' ? 'Completed' : 'Scheduled'
+}
+
 export default async function PublicSchedule({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const params = await searchParams
   const q = String(params.q ?? '').trim().slice(0, 150)
@@ -52,8 +53,6 @@ export default async function PublicSchedule({ searchParams }: { searchParams: P
   const requestedProgram = String(params.program ?? '').toUpperCase()
   const program = PROGRAMS.has(requestedProgram) ? requestedProgram : null
   const date = /^\d{4}-\d{2}-\d{2}$/.test(String(params.date ?? '')) ? String(params.date) : null
-  const view = ['upcoming', 'completed'].includes(params.view ?? '') ? params.view! : 'all'
-  const now = Date.now()
   const hasFilters = Boolean(q || defense || program || date)
   const dayView = Boolean(date && !q && !defense && !program)
   const supabase = await createClient()
@@ -69,57 +68,35 @@ export default async function PublicSchedule({ searchParams }: { searchParams: P
   const schedules = ((data ?? []) as ScheduleRow[]).filter((schedule) => {
     const stage = one(schedule.research_defenses)
     if (!stage) return false
-    if (view === 'upcoming' && !isUpcomingDefense(stage.status, schedule.defense_date, schedule.end_time, now)) return false
-    if (view === 'completed' && stage.status !== 'completed') return false
     if (q && !stage.title_snapshot.toLowerCase().includes(q.toLowerCase())) return false
     if (defense && stage.defense_type !== defense) return false
     if (program && stage.program_snapshot !== program) return false
     if (date && schedule.defense_date !== date) return false
     return true
-  }).sort((a, b) => {
-    const future = (row: ScheduleRow) => isUpcomingDefense(one(row.research_defenses)?.status ?? '', row.defense_date, row.end_time, now)
-    const aFuture = future(a), bFuture = future(b)
-    if (aFuture !== bFuture) return aFuture ? -1 : 1
-    const byDate = a.defense_date.localeCompare(b.defense_date)
-    return (aFuture ? byDate : -byDate) || a.start_time.localeCompare(b.start_time)
   })
-
-  function viewHref(next: string) {
-    const values = new URLSearchParams()
-    if (q) values.set('q', q)
-    if (defense) values.set('defense', defense)
-    if (program) values.set('program', program)
-    if (date) values.set('date', date)
-    if (next !== 'all') values.set('view', next)
-    return `/schedule${values.size ? `?${values}` : ''}`
-  }
 
   return (
     <section className="section minimal-schedule-page">
       <div className="container">
         <div className="minimal-page-heading">
           <div>
+            <p className="eyebrow">Published Defenses</p>
             <h1>{dayView && date ? `Defenses on ${formatLongDate(date)}` : 'Defense schedule'}</h1>
-            <p>{dayView ? 'Defense times and details for this date. All times are Philippine time (UTC+8).' : 'Published defense schedules. All times are Philippine time (UTC+8).'}</p>
+            <p>{dayView ? 'Published scheduled and completed defenses for this date.' : 'Published defenses remain accessible after completion.'}</p>
           </div>
-          {dayView && date ? <Link className="button button-secondary button-small" href={`/?month=${date.slice(0, 7)}`}>← Defense dates</Link> : null}
+          <Link className="button button-secondary button-small" href={dayView && date ? `/?month=${date.slice(0, 7)}` : '/'}>{dayView ? '← Calendar' : '← Home'}</Link>
         </div>
-
-        <nav className="schedule-views" aria-label="Schedule views">
-          {[['all', 'All'], ['upcoming', 'Upcoming'], ['completed', 'Completed']].map(([value, label]) => <Link key={value} href={viewHref(value)} aria-current={view === value ? 'page' : undefined}>{label}</Link>)}
-        </nav>
 
         {dayView ? <div className="minimal-schedule-tools"><span className="minimal-result-count">{schedules.length} {schedules.length === 1 ? 'defense' : 'defenses'}</span></div> : (
           <div className="minimal-schedule-tools">
             <details className="minimal-filter" open={hasFilters || undefined}>
-              <summary>Search & filter{hasFilters ? ' · Active' : ''}</summary>
+              <summary>Filter{hasFilters ? ' · Active' : ''}</summary>
               <form method="get" action="/schedule" className="minimal-filter-form">
-                {view !== 'all' ? <input type="hidden" name="view" value={view} /> : null}
                 <div className="field minimal-filter-search"><label htmlFor="schedule-search">Research title</label><input id="schedule-search" name="q" defaultValue={q} maxLength={150} placeholder="Search title" /></div>
                 <div className="field"><label htmlFor="schedule-defense">Defense type</label><select id="schedule-defense" name="defense" defaultValue={defense ?? ''}><option value="">All types</option><option value="title">Title Defense</option><option value="proposal">Proposal Defense</option><option value="final">Final Defense</option></select></div>
                 <div className="field"><label htmlFor="schedule-program">Program</label><select id="schedule-program" name="program" defaultValue={program ?? ''}><option value="">All programs</option><option value="BEED">BEED</option><option value="BSED">BSED</option><option value="BSA">BSA</option><option value="BSAIS">BSAIS</option><option value="BSBA">BSBA</option></select></div>
                 <div className="field"><label htmlFor="schedule-date">Date</label><input id="schedule-date" name="date" type="date" defaultValue={date ?? ''} /></div>
-                <div className="minimal-filter-actions"><button className="button button-small" type="submit">Show results</button>{hasFilters ? <Link className="button button-secondary button-small" href="/schedule">Clear</Link> : null}</div>
+                <div className="minimal-filter-actions"><button className="button button-small" type="submit">Apply</button>{hasFilters ? <Link className="button button-secondary button-small" href="/schedule">Clear</Link> : null}</div>
               </form>
             </details>
             <span className="minimal-result-count">{schedules.length} {schedules.length === 1 ? 'defense' : 'defenses'}</span>
@@ -127,9 +104,9 @@ export default async function PublicSchedule({ searchParams }: { searchParams: P
         )}
 
         {error ? (
-          <div className="minimal-empty" role="alert"><h2>Unable to load the schedule.</h2><p>Please try again. If the problem continues, check back later.</p><Link className="button button-secondary" href={viewHref(view)}>Try again</Link></div>
+          <div className="minimal-empty"><h3>Schedule is temporarily unavailable.</h3><p>Please try again later.</p></div>
         ) : schedules.length === 0 ? (
-          <div className="minimal-empty"><h3>{hasFilters ? 'No defenses match your search.' : view === 'upcoming' ? 'No upcoming defenses announced.' : view === 'completed' ? 'No completed defenses yet.' : 'No defenses announced yet.'}</h3><p>{dayView ? 'Return to the calendar and choose another marked date.' : hasFilters ? 'Change or clear the filters to see other defenses.' : 'Check back for new schedules, or view all defenses.'}</p>{dayView && date ? <Link className="text-link" href={`/?month=${date.slice(0, 7)}`}>Back to calendar →</Link> : hasFilters ? <Link className="text-link" href="/schedule">Clear filters →</Link> : view !== 'all' ? <Link className="text-link" href="/schedule">View all defenses →</Link> : null}</div>
+          <div className="minimal-empty"><h3>{dayView ? 'No published defenses on this date.' : hasFilters ? 'No defenses match these filters.' : 'No published defenses yet.'}</h3><p>{dayView ? 'Return to the calendar and choose another marked date.' : hasFilters ? 'Change or clear the filters to see other defenses.' : 'Published scheduled and completed defenses will appear here.'}</p>{dayView && date ? <Link className="text-link" href={`/?month=${date.slice(0, 7)}`}>Back to calendar →</Link> : hasFilters ? <Link className="text-link" href="/schedule">Clear filters →</Link> : null}</div>
         ) : (
           <div className="minimal-schedule-list">
             {schedules.map((schedule) => {
@@ -140,7 +117,7 @@ export default async function PublicSchedule({ searchParams }: { searchParams: P
               const chairName = one(chair?.faculty)?.full_name ?? null
               const members = panel.filter((item) => item.panel_role === 'member').map((item) => one(item.faculty)?.full_name).filter((name): name is string => Boolean(name))
 
-              return <article className={`minimal-schedule-card${stage.status === 'completed' ? ' is-completed-defense' : ''}`} key={schedule.id}><div className="minimal-schedule-when"><strong>{dayView ? `${formatTime(schedule.start_time)} – ${formatTime(schedule.end_time)}` : formatDate(schedule.defense_date)}</strong>{!dayView ? <span>{formatTime(schedule.start_time)} – {formatTime(schedule.end_time)}</span> : null}</div><div className="minimal-schedule-main"><div className="minimal-defense-labels"><span className={`public-status-badge status-${stage.status}`}>{publicDefenseStatus(stage.status, schedule.defense_date, schedule.end_time, now)}</span><span className={`public-defense-badge type-${stage.defense_type ?? 'general'}`}>{defenseLabel(stage.defense_type)}</span><span className="public-program-badge">{programLabel(stage)}</span></div><h2>{stage.title_snapshot}</h2><p><strong>Venue:</strong> {schedule.venue?.trim() || 'To be announced'}</p></div><div className="minimal-panel"><div><span>Panel Chair</span><strong>{chairName ?? 'Not listed'}</strong></div><div><span>Panel Members</span><p>{members.length ? members.join(', ') : 'Not listed'}</p></div></div></article>
+              return <article className={`minimal-schedule-card${stage.status === 'completed' ? ' is-completed-defense' : ''}`} key={schedule.id}><div className="minimal-schedule-when"><strong>{dayView ? `${formatTime(schedule.start_time)} – ${formatTime(schedule.end_time)}` : formatDate(schedule.defense_date)}</strong>{!dayView ? <span>{formatTime(schedule.start_time)} – {formatTime(schedule.end_time)}</span> : null}</div><div className="minimal-schedule-main"><div className="minimal-defense-labels"><span className={`public-status-badge status-${stage.status}`}>{statusLabel(stage.status)}</span><span className={`public-defense-badge type-${stage.defense_type ?? 'general'}`}>{defenseLabel(stage.defense_type)}</span><span className="public-program-badge">{programLabel(stage)}</span></div><h2>{stage.title_snapshot}</h2><p><strong>Venue:</strong> {schedule.venue || 'Not specified'}</p></div><div className="minimal-panel"><div><span>Panel Chair</span><strong>{chairName ?? 'Not listed'}</strong></div><div><span>Panel Members</span><p>{members.length ? members.join(', ') : 'Not listed'}</p></div></div></article>
             })}
           </div>
         )}
